@@ -101,8 +101,15 @@ namespace kwa::asyncio {
         }
 
         while (!_ready.empty()) {
-            _ready.front()();
-            _ready.pop();
+            if (_stop) {
+                // if loop stop, clear ready queue
+                do {
+                    _ready.pop();
+                } while (!_ready.empty());
+            } else {
+                _ready.front()();
+                _ready.pop();
+            }
         }
     }
 
