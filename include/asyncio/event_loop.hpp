@@ -28,8 +28,8 @@ namespace kwa::asyncio {
             EventLoop();
             void _process_epoll(int timeout) noexcept;
             void _run_once() noexcept;
-            static inline TimePoint _time() noexcept {
-                return steady_clock::now();
+            static inline types::TimePoint _time() noexcept {
+                return types::Clock::now();
             }
         public:
             [[nodiscard]] static EventLoop& get() noexcept;
@@ -39,8 +39,8 @@ namespace kwa::asyncio {
             EventLoop& operator=(EventLoop&&) = delete;
             void call_soon(types::EventLoopHandle&& callback) noexcept;
             void call_soon_threadsafe(types::EventLoopHandle&& callback) noexcept;
-            std::shared_ptr<Timer> call_at(time_point<steady_clock> when, types::EventLoopHandle&& callback) noexcept;
-            std::shared_ptr<Timer> call_later(milliseconds delay, types::EventLoopHandle&& callback) noexcept;
+            std::shared_ptr<Timer> call_at(types::TimePoint when, types::EventLoopHandle&& callback) noexcept;
+            std::shared_ptr<Timer> call_later(std::chrono::milliseconds delay, types::EventLoopHandle&& callback) noexcept;
             void stop() noexcept;
             void run() noexcept;
 

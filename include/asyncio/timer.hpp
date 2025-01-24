@@ -1,15 +1,9 @@
 #pragma once
-#include <chrono>
-
 #include "types.hpp"
 #include "concepts.hpp"
 
 
 namespace kwa::asyncio {
-    using namespace std::chrono;
-    using Clock = steady_clock;
-    using TimePoint = time_point<Clock>;
-
     class EventLoop;
     class Timer {
         friend EventLoop;
@@ -17,7 +11,7 @@ namespace kwa::asyncio {
         private:
             static uint32_t _ID;
             uint32_t _id { 0 };
-            TimePoint _when;
+            types::TimePoint _when;
             bool _canceled { false };
             types::EventLoopHandle _callback;
         public:
@@ -26,7 +20,7 @@ namespace kwa::asyncio {
             Timer(Timer&) = delete;
             Timer& operator=(Timer&) = delete;
             Timer(Timer&& timer);
-            Timer(TimePoint when, types::EventLoopHandle&& callback);
+            Timer(types::TimePoint when, types::EventLoopHandle&& callback);
             Timer& operator=(Timer&& timer) noexcept;
             void cancel() noexcept;
             inline bool canceled() const noexcept { return _canceled; }

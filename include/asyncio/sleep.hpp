@@ -8,8 +8,6 @@
 
 
 namespace kwa::asyncio {
-    using namespace std::chrono;
-
     template<uint64_t MS>
     class ASYNCIO_EXPORT sleep {
         private:
@@ -27,7 +25,7 @@ namespace kwa::asyncio {
             requires concepts::Promise<P> || std::same_as<P, void>
             void await_suspend(std::coroutine_handle<P> handle) noexcept {
                 _timer = EventLoop::get().call_later(
-                    milliseconds(MS),
+                    std::chrono::milliseconds(MS),
                     [handle]() {
                         if (!handle.promise().canceled()) {
                             handle.resume();

@@ -11,7 +11,9 @@
 
 
 namespace kwa::asyncio {
-    static auto clock_resolution = milliseconds(1000 * Clock::period::num / Clock::period::den);
+    static auto clock_resolution = std::chrono::milliseconds(
+        1000 * types::Clock::period::num / types::Clock::period::den
+    );
 
     static void signal_handle(int sig) noexcept {
         if (sig == SIGINT) {
@@ -73,7 +75,7 @@ namespace kwa::asyncio {
         if (!_ready.empty() || _stop) {
             timeout = 0;
         } else if (!_schedule.empty()) {
-            timeout = duration_cast<milliseconds>(
+            timeout = duration_cast<std::chrono::milliseconds>(
                 _schedule[0]->_when - _time()
             ).count();
             if (timeout > MAX_SELECT_TIMEOUT) {
@@ -122,15 +124,15 @@ namespace kwa::asyncio {
         _ready.push(std::move(callback));
     }
 
-    std::shared_ptr<Timer> EventLoop::call_at(time_point<steady_clock> when, types::EventLoopHandle&& callback) noexcept {
+    std::shared_ptr<Timer> EventLoop::call_at(types::TimePoint when, types::EventLoopHandle&& callback) noexcept {
         auto timer = std::make_shared<Timer>(when, std::move(callback));
         _schedule.push_back(timer);
         std::push_heap(_schedule.begin(), _schedule.end());
         return timer;
     }
 
-    std::shared_ptr<Timer> EventLoop::call_later(milliseconds delay, types::EventLoopHandle&& callback) noexcept {
-        auto now = steady_clock::now();
+    std::shared_ptr<Timer> EventLoop::call_later(std::chrono::milliseconds delay, types::EventLoopHandle&& callback) noexcept {
+        auto now = types::Clock::now();
         auto when = now + delay;
         return call_at(when, std::move(callback));
     }
