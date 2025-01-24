@@ -5,6 +5,7 @@
 
 #include "tiny_thread_pool.hpp"
 
+#include "config.hpp"
 #include "concepts.hpp"
 #include "types.hpp"
 #include "timer.hpp"
@@ -23,11 +24,14 @@ namespace kwa::asyncio {
             std::vector<std::shared_ptr<Timer>> _schedule {};
             std::queue<types::EventLoopHandle> _ready {};
             std::mutex _lock {};
-            TinyThreadPool _pool { 4 };
 
             EventLoop();
             void _process_epoll(int timeout) noexcept;
             void _run_once() noexcept;
+            inline TinyThreadPool& _get_pool() const noexcept {
+                static TinyThreadPool pool { THREAD_POOL_SIZE };
+                return pool;
+            }
             static inline types::TimePoint _time() noexcept {
                 return types::Clock::now();
             }
@@ -60,7 +64,7 @@ namespace kwa::asyncio {
             requires requires(F f, Args... args) { f(args...); }
             [[nodiscard]] auto run_in_thread(F&& f, Args&&... args) noexcept
             -> FutureAwaiter<decltype(f(args...))> {
-                return { _pool, std::forward<F>(f), std::forward<Args>(args)... };
+                return { _get_pool(), std::forward<F>(f), std::forward<Args>(args)... };
             }
     };
 }
