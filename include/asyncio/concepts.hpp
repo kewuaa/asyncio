@@ -29,6 +29,8 @@ namespace kwa::asyncio::concepts {
         requires std::move_constructible<T>;
         requires !std::default_initializable<T>;
         requires !std::copy_constructible<T>;
+        { task.done() } -> std::same_as<bool>;
+        { task.valid() } -> std::same_as<bool>;
         { task.result() } -> std::same_as<typename T::result_type>;
         requires requires(typename T::Callback cb) {
             { task.add_done_callback(std::move(cb)) } -> std::same_as<void>;
