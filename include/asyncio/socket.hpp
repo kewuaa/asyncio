@@ -32,9 +32,6 @@ namespace kwa::asyncio {
             [[nodiscard]] Accepter accept() const noexcept;
             [[nodiscard]] Reader read(char* buffer, size_t size) const noexcept;
             [[nodiscard]] Task<> write(const char* buffer, size_t size) const noexcept;
-            [[nodiscard]] inline int read_immediately(char* buffer, size_t size) const noexcept {
-                return ::read(_fd, buffer, size);
-            }
     };
 
     class Socket::Reader {
@@ -44,6 +41,7 @@ namespace kwa::asyncio {
             char* _buffer { nullptr };
             size_t _buffer_size { 0 };
             size_t _read_size { 0 };
+            bool _closed { false };
             Reader(int fd, char* buffer, size_t size);
             void _read_once() noexcept;
         public:
@@ -54,7 +52,7 @@ namespace kwa::asyncio {
             Reader& operator=(Reader&&) = delete;
 
             inline bool await_ready() const noexcept {
-                return _read_size > 0;
+                return _read_size > 0 or _closed;
             }
 
             template<typename P>
@@ -71,7 +69,7 @@ namespace kwa::asyncio {
                 );
             }
 
-            int await_resume() noexcept;
+            std::expected<int, Exception> await_resume() noexcept;
 
             static_assert(concepts::Awaitable<Reader>, "Reader not satisfy the Awaitable concept");
     };
@@ -83,6 +81,7 @@ namespace kwa::asyncio {
             const char* _buffer { nullptr };
             size_t _buffer_size { 0 };
             size_t _write_size { 0 };
+            bool _closed { false };
             Writer(int fd, const char* buffer, size_t size);
             void _write_once() noexcept;
         public:
@@ -93,7 +92,7 @@ namespace kwa::asyncio {
             Writer& operator=(Writer&&) = delete;
 
             inline bool await_ready() const noexcept {
-                return _write_size == _buffer_size;
+                return _write_size == _buffer_size or _closed;
             }
 
             template<typename P>
@@ -110,7 +109,7 @@ namespace kwa::asyncio {
                 );
             }
 
-            int await_resume() noexcept;
+            std::expected<int, Exception> await_resume() noexcept;
 
             static_assert(concepts::Awaitable<Writer>, "Writer not satisfy the Awaitable concept");
     };

@@ -3,6 +3,7 @@
 #include "asyncio.hpp"
 using namespace kwa;
 using namespace boost::ut;
+using namespace boost::ut::bdd;
 
 
 template<size_t N>
@@ -14,38 +15,39 @@ asyncio::Task<> coro_depth_n(std::vector<int>& result) {
     }
 }
 
+
 asyncio::Task<int64_t> square(int64_t x) {
     co_return x * x;
 }
 
 
 int main() {
-    "task test"_test = []() {
-        "simple await"_test = []() {
+    "task"_test = [] {
+        given("simple await") = [] {
             std::vector<int> result;
             auto res = asyncio::run(coro_depth_n<0>(result));
             expect(res.has_value());
             expect(result == std::vector<int>{0});
         };
-        "nest await"_test = []() {
+        given("nest await") = [] {
             std::vector<int> result;
             auto res = asyncio::run(coro_depth_n<1>(result));
             expect(res.has_value());
             expect(result == std::vector<int>{1, 0, 10});
         };
-        "3 depth await"_test = []() {
+        given("3 depth await") = [] {
             std::vector<int> result;
             auto res = asyncio::run(coro_depth_n<2>(result));
             expect(res.has_value());
             expect(result == std::vector<int>{2, 1, 0, 10, 20});
         };
-        "4 depth await"_test = []() {
+        given("4 depth await") = [] {
             std::vector<int> result;
             auto res = asyncio::run(coro_depth_n<3>(result));
             expect(res.has_value());
             expect(result == std::vector<int>{ 3, 2, 1, 0, 10, 20, 30 });
         };
-        "5 depth await"_test = []() {
+        given("5 depth await") = [] {
             std::vector<int> result;
             auto res = asyncio::run(coro_depth_n<4>(result));
             expect(res.has_value());
@@ -53,10 +55,10 @@ int main() {
         };
     };
 
-    "Task<> test"_test = []() {
+    "Task<>"_test = [] {
         bool called { false };
         auto res = asyncio::run(
-            [&]() -> asyncio::Task<> {
+            [&] -> asyncio::Task<> {
                 auto t = square(5);
                 auto tt = std::move(t);
                 auto res = co_await t;
@@ -68,5 +70,17 @@ int main() {
         );
         expect(res.has_value());
         expect(called) << "task not run successfully";
+    };
+
+    "Task await result"_test = [] {
+        given("square_sum 3, 4") = [] {
+            auto square_sum = [](int x, int y) -> asyncio::Task<long> {
+                auto tx = square(x);
+                auto x2 = *(co_await tx);
+                auto y2 = *(co_await square(y));
+                co_return x2 + y2;
+            };
+            expect(*asyncio::run(square_sum(3, 4)) == 25);
+        };
     };
 }

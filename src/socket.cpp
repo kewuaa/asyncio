@@ -107,11 +107,15 @@ namespace kwa::asyncio {
         int buffer_size = size;
         int pos = 0;
         while (true) {
-            auto nbytes = co_await Writer(
+            auto res = co_await Writer(
                 _fd,
                 buffer + pos,
                 buffer_size
             );
+            if (!res) {
+                co_yield res.error();
+            }
+            auto nbytes = *res;
             if (nbytes == buffer_size) {
                 break;
             }
@@ -130,7 +134,6 @@ namespace kwa::asyncio {
     }
 
     void Socket::Reader::_read_once() noexcept {
-        exit_if(_fd < 0, "connection seems already closed");
         while (_read_size < _buffer_size) {
             auto nbytes = ::read(_fd, _buffer+_read_size, _buffer_size-_read_size);
             if (nbytes > 0) {
@@ -143,18 +146,25 @@ namespace kwa::asyncio {
                 }
             } else if (nbytes == 0) {
                 spdlog::info("connection to socket fd {} closed", _fd);
-                close(std::exchange(_fd, -1));
+                _closed = true;
+                break;
             }
         }
     }
 
-    int Socket::Reader::await_resume() noexcept {
+    std::expected<int, Exception> Socket::Reader::await_resume() noexcept {
         if (_read_size > 0) {
             return _read_size;
+        }
+        if (_closed) {
+            return std::unexpected<Exception>({"connection closed"});
         }
         auto& epoll = Epoll::get();
         epoll.remove_reader(_fd);
         _read_once();
+        if (_closed) {
+            return std::unexpected<Exception>({"connection closed"});
+        }
         return _read_size;
     }
 
@@ -168,7 +178,6 @@ namespace kwa::asyncio {
     }
 
     void Socket::Writer::_write_once() noexcept {
-        exit_if(_fd < 0, "connection seems already closed");
         while (_write_size < _buffer_size) {
             auto nbytes = ::write(_fd, _buffer+_write_size, _buffer_size-_write_size);
             if (nbytes > 0) {
@@ -181,18 +190,25 @@ namespace kwa::asyncio {
                 }
             } else if (nbytes == 0) {
                 spdlog::info("connection to socket fd {} closed", _fd);
-                close(std::exchange(_fd, -1));
+                _closed = true;
+                break;
             }
         }
     }
 
-    int Socket::Writer::await_resume() noexcept {
+    std::expected<int, Exception> Socket::Writer::await_resume() noexcept {
         if (_write_size == _buffer_size) {
             return _write_size;
+        }
+        if (_closed) {
+            return std::unexpected<Exception>({"connection closed"});
         }
         auto& epoll = Epoll::get();
         epoll.remove_writer(_fd);
         _write_once();
+        if (_closed) {
+            return std::unexpected<Exception>({"connection closed"});
+        }
         return _write_size;
     }
 
