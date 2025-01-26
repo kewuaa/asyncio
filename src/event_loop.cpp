@@ -5,7 +5,6 @@
 
 #include <spdlog/spdlog.h>
 
-#include "asyncio/config.hpp"
 #include "asyncio/epoll.hpp"
 #include "asyncio/event_loop.hpp"
 

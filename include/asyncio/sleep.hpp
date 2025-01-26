@@ -4,12 +4,11 @@
 #include "concepts.hpp"
 #include "event_loop.hpp"
 #include "timer.hpp"
-#include "asyncio_export.hpp"
 
 
 namespace kwa::asyncio {
     template<uint64_t MS>
-    class ASYNCIO_EXPORT sleep {
+    class sleep {
         private:
             std::shared_ptr<Timer> _timer { nullptr };
         public:
