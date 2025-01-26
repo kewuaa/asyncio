@@ -90,14 +90,14 @@ namespace kwa::asyncio {
 
             inline result_type result() const & noexcept {
                 if (!valid()) {
-                    return std::unexpected<Exception>({"invalid task"});
+                    return Error(InvalidTask());
                 }
                 return _handle.promise().get_result();
             }
 
             inline result_type result() && noexcept {
                 if (!valid()) {
-                    return std::unexpected<Exception>({"invalid task"});
+                    return Error(InvalidTask());
                 }
                 return std::move(std::exchange(_handle, nullptr).promise()).get_result();
             }
@@ -156,15 +156,15 @@ namespace kwa::asyncio {
 
         result_type get_result() && noexcept {
             if (canceled()) {
-                exception = { "task had already been canceled" };
+                exception = TaskCanceled();
             }
             auto e = std::exchange(exception, std::nullopt);
             if (e) {
-                return std::unexpected<Exception>(std::move(*e));
+                return Error(std::move(*e));
             }
             if constexpr (!std::is_void_v<R>) {
                 if (!this->result) {
-                    return std::unexpected<Exception>("get result while result not setted yet");
+                    return Error(TaskUnready());
                 }
                 return *std::exchange(this->result, std::nullopt);
             }
@@ -173,14 +173,14 @@ namespace kwa::asyncio {
 
         result_type get_result() & noexcept {
             if (canceled()) {
-                exception = { "task had already been canceled" };
+                exception = TaskCanceled();
             }
             if (exception) {
-                return std::unexpected<Exception>(*exception);
+                return Error(*exception);
             }
             if constexpr (!std::is_void_v<R>) {
                 if (!this->result) {
-                    return std::unexpected<Exception>("get result while result not setted yet");
+                    return Error(TaskUnready());
                 }
                 return *this->result;
             }

@@ -33,6 +33,22 @@ namespace kwa::asyncio {
         return *this;
     }
 
+    InvalidTask::InvalidTask(): Exception("task is invalid") {
+        //
+    }
+
+    TaskCanceled::TaskCanceled(): Exception("task already canceled") {
+        //
+    }
+
+    TaskUnready::TaskUnready(): Exception("task not ready yet") {
+        //
+    }
+
+    ConnectionClosed::ConnectionClosed(): Exception("connection closed") {
+        //
+    }
+
     std::ostream& operator<<(std::ostream& s, const Exception& e) noexcept {
         s << e._msg;
         return s;

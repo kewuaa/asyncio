@@ -62,10 +62,10 @@ namespace kwa::asyncio {
         sockaddr_in addr { 0 };
         init_address(addr, host, port);
         if (::bind(_fd, (sockaddr*)&addr, sizeof(addr)) == -1) {
-            return std::unexpected<Exception>({
+            return Error(Exception(
                 "socket fd {} failed to bind to {}:{}",
                 _fd, host, port
-            });
+            ));
         }
         spdlog::info("socket fd {} successfully bind to {}:{}", _fd, host, port);
         return {};
@@ -73,9 +73,9 @@ namespace kwa::asyncio {
 
     std::expected<void, Exception> Socket::listen(int max_listen_num) const noexcept {
         if (::listen(_fd, max_listen_num) == -1) {
-            return std::unexpected<Exception>({
+            return Error(Exception(
                 "socket fd {} listen failed", _fd
-            });
+            ));
         }
         spdlog::info("start listening");
         return {};
@@ -85,10 +85,10 @@ namespace kwa::asyncio {
         sockaddr_in addr { 0 };
         init_address(addr, host, port);
         if (::connect(_fd, (sockaddr*)&addr, sizeof(addr)) == -1) {
-            return std::unexpected<Exception>({
+            return Error(Exception(
                 "socket fd {} failed to connect to {}:{}",
                 _fd, host, port
-            });
+            ));
         }
         spdlog::info("socket fd {} successfully connect to {}:{}", _fd, host, port);
         return {};
@@ -157,13 +157,13 @@ namespace kwa::asyncio {
             return _read_size;
         }
         if (_closed) {
-            return std::unexpected<Exception>({"connection closed"});
+            return Error(ConnectionClosed());
         }
         auto& epoll = Epoll::get();
         epoll.remove_reader(_fd);
         _read_once();
         if (_closed) {
-            return std::unexpected<Exception>({"connection closed"});
+            return Error(ConnectionClosed());
         }
         return _read_size;
     }
@@ -201,13 +201,13 @@ namespace kwa::asyncio {
             return _write_size;
         }
         if (_closed) {
-            return std::unexpected<Exception>({"connection closed"});
+            return Error(ConnectionClosed());
         }
         auto& epoll = Epoll::get();
         epoll.remove_writer(_fd);
         _write_once();
         if (_closed) {
-            return std::unexpected<Exception>({"connection closed"});
+            return Error(ConnectionClosed());
         }
         return _write_size;
     }

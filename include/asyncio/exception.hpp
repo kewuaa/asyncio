@@ -36,4 +36,26 @@ namespace kwa::asyncio {
                 return _msg.c_str();
             }
     };
+
+    class ASYNCIO_EXPORT InvalidTask: public Exception {
+        public:
+            InvalidTask();
+    };
+
+    class ASYNCIO_EXPORT TaskCanceled: public Exception {
+        public:
+            TaskCanceled();
+    };
+
+    class ASYNCIO_EXPORT TaskUnready: public Exception {
+        public:
+            TaskUnready();
+    };
+
+    class ASYNCIO_EXPORT ConnectionClosed: public Exception {
+        public:
+            ConnectionClosed();
+    };
+
+    using Error = std::unexpected<Exception>;
 }
