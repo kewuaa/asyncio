@@ -148,7 +148,7 @@ namespace kwa::asyncio {
                 );
             }
 
-            int await_resume() noexcept;
+            [[nodiscard]] int await_resume() noexcept;
 
             static_assert(concepts::Awaitable<Accepter>, "Accepter not satisfy the Awaitable concept");
     };
