@@ -83,4 +83,21 @@ int main() {
             expect(*asyncio::run(square_sum(3, 4)) == 25);
         };
     };
+
+    "Task cancel"_test = [] {
+        auto res = asyncio::run(
+            [] -> asyncio::Task<> {
+                auto task = [] -> asyncio::Task<> {
+                    co_await asyncio::sleep<500>();
+                    expect(false);
+                }();
+                task.cancel();
+                expect(task.canceled());
+                auto res = co_await task;
+                expect(!res.has_value());
+                co_return;
+            }()
+        );
+        expect(res.has_value());
+    };
 }
