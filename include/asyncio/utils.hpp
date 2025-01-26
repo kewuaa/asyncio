@@ -1,8 +1,6 @@
 #pragma once
 #include <spdlog/spdlog.h>
 
-#include "event_loop.hpp"
-
 
 namespace kwa::asyncio {
     template<typename... Args>
@@ -16,7 +14,7 @@ namespace kwa::asyncio {
             if (errno != 0) {
                 std::perror("error");
             }
-            EventLoop::get().stop();
+            exit(EXIT_FAILURE);
         }
     }
 }
