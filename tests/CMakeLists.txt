@@ -1,10 +1,20 @@
-ADD_EXECUTABLE(test_task)
-TARGET_SOURCES(test_task PRIVATE test_task.cpp)
-TARGET_LINK_LIBRARIES(
+SET(
+    tests
     test_task
-    PRIVATE
-        Boost::ut
-        ${PROJECT_NAME}
+    test_sleep
+    test_timer
 )
-
-ADD_TEST(NAME test_task COMMAND $<TARGET_FILE:test_task>)
+foreach (
+    test IN LISTS tests
+)
+    MESSAGE(STATUS "add test for ${test}")
+    ADD_EXECUTABLE(${test})
+    TARGET_SOURCES(${test} PRIVATE ${test}.cpp)
+    TARGET_LINK_LIBRARIES(
+        ${test}
+        PRIVATE
+            Boost::ut
+            ${PROJECT_NAME}
+    )
+    ADD_TEST(NAME ${test} COMMAND $<TARGET_FILE:${test}>)
+endforeach()

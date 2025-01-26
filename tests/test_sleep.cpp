@@ -29,10 +29,10 @@ int main() {
             auto res = asyncio::run(
                 [] -> asyncio::Task<> {
                     auto start = asyncio::types::Clock::now();
-                    co_await asyncio::sleep<1000>();
+                    co_await asyncio::sleep<500>();
                     auto end = asyncio::types::Clock::now();
                     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-                    expect(duration > 999 and duration < 1001);
+                    expect(duration > 499 and duration < 501);
                 }()
             );
             expect(res.has_value());
