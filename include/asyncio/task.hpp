@@ -69,7 +69,10 @@ namespace kwa::asyncio {
 
             bool await_ready() const noexcept {
                 if (_handle) [[likely]] {
-                     return _handle.done() || _handle.promise().exception;
+                     return
+                         _handle.done()
+                         || _handle.promise().canceled()
+                         || _handle.promise().exception;
                 }
                 return true;
             }
