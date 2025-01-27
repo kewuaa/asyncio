@@ -19,6 +19,12 @@ namespace kwa::asyncio {
             std::future<R> _fut { nullptr };
             std::mutex _lock {};
         public:
+            FutureAwaiter() = delete;
+            FutureAwaiter(FutureAwaiter&) = delete;
+            FutureAwaiter(FutureAwaiter&&) = delete;
+            FutureAwaiter& operator=(FutureAwaiter&) = delete;
+            FutureAwaiter& operator=(FutureAwaiter&&) = delete;
+
             template<typename F, typename... Args>
             requires requires(F f, Args... args) {
                 { f(args...) } -> std::same_as<R>;

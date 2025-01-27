@@ -62,9 +62,9 @@ namespace kwa::asyncio {
 
             template<typename F, typename... Args>
             requires requires(F f, Args... args) { f(args...); }
-            [[nodiscard]] auto run_in_thread(F&& f, Args&&... args) noexcept
-            -> FutureAwaiter<decltype(f(args...))> {
-                return { _get_pool(), std::forward<F>(f), std::forward<Args>(args)... };
+            [[nodiscard]] decltype(auto) run_in_thread(F&& f, Args&&... args) noexcept {
+                using result_type = decltype(f(args...));
+                return std::make_shared<FutureAwaiter<result_type>>(_get_pool(), std::forward<F>(f), std::forward<Args>(args)...);
             }
     };
 }
