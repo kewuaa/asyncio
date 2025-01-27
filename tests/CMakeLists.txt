@@ -3,6 +3,7 @@ SET(
     test_task
     test_sleep
     test_timer
+    test_thread
 )
 foreach (
     test IN LISTS tests
