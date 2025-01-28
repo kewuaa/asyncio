@@ -63,6 +63,20 @@ namespace kwa::asyncio {
         }
     }
 
+    Socket& Socket::operator=(Socket& s) noexcept {
+        _fd = s._fd;
+        _self_fd = false;
+        _host = s._host;
+        _port = s._port;
+    }
+
+    Socket& Socket::operator=(Socket&& s) noexcept {
+        _fd = std::exchange(s._fd, -1);
+        _self_fd = std::exchange(s._self_fd, false);
+        _host = std::exchange(s._host, nullptr);
+        _port = std::exchange(s._port, -1);
+    }
+
     std::expected<void, Exception> Socket::bind(const char* host, short port) noexcept {
         _host = host;
         _port = port;

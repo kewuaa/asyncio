@@ -26,6 +26,8 @@ namespace kwa::asyncio {
             Socket(Socket& s);
             Socket(Socket&& s);
             ~Socket();
+            Socket& operator=(Socket& s) noexcept;
+            Socket& operator=(Socket&& s) noexcept;
             [[nodiscard]] std::expected<void, Exception> bind(const char* host, short port) noexcept;
             [[nodiscard]] std::expected<void, Exception> listen(int max_listen_num) const noexcept;
             [[nodiscard]] std::expected<void, Exception> connect(const char* host, short port) const noexcept;
