@@ -17,7 +17,7 @@ namespace kwa::asyncio {
             class Accepter;
 
             int _fd { -1 };
-            bool _self_fd { true };
+            bool _self_fd { false };
             const char* _host { nullptr };
             short _port { -1 };
         public:
