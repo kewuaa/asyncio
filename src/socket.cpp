@@ -29,7 +29,7 @@ namespace kwa::asyncio {
     ////////////////////////////////////////////////////
     ///ASocket
     ////////////////////////////////////////////////////
-    Socket::Socket(): _fd(socket(AF_INET, SOCK_STREAM, 0)) {
+    Socket::Socket(): _fd(socket(AF_INET, SOCK_STREAM, 0)), _own_fd(true) {
         spdlog::info("successfully open socket fd {}", _fd);
         nonblock_socket(_fd);
     }
