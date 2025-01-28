@@ -34,13 +34,13 @@ namespace kwa::asyncio {
         nonblock_socket(_fd);
     }
 
-    Socket::Socket(int fd): _fd(fd), _self_fd(false) {
+    Socket::Socket(int fd): _fd(fd), _own_fd(false) {
         nonblock_socket(fd);
     }
 
     Socket::Socket(Socket& s):
         _fd(s._fd),
-        _self_fd(false),
+        _own_fd(false),
         _host(s._host),
         _port(s._port)
     {
@@ -49,7 +49,7 @@ namespace kwa::asyncio {
 
     Socket::Socket(Socket&& s):
         _fd(std::exchange(s._fd, -1)),
-        _self_fd(std::exchange(s._self_fd, false)),
+        _own_fd(std::exchange(s._own_fd, false)),
         _host(std::exchange(s._host, nullptr)),
         _port(std::exchange(s._port, -1))
     {
@@ -57,7 +57,7 @@ namespace kwa::asyncio {
     }
 
     Socket::~Socket() {
-        if (_self_fd && _fd != -1) {
+        if (_own_fd && _fd != -1) {
             close(_fd);
             spdlog::info("close socket fd {}", _fd);
         }
@@ -65,14 +65,14 @@ namespace kwa::asyncio {
 
     Socket& Socket::operator=(Socket& s) noexcept {
         _fd = s._fd;
-        _self_fd = false;
+        _own_fd = false;
         _host = s._host;
         _port = s._port;
     }
 
     Socket& Socket::operator=(Socket&& s) noexcept {
         _fd = std::exchange(s._fd, -1);
-        _self_fd = std::exchange(s._self_fd, false);
+        _own_fd = std::exchange(s._own_fd, false);
         _host = std::exchange(s._host, nullptr);
         _port = std::exchange(s._port, -1);
     }
