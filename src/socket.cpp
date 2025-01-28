@@ -38,13 +38,20 @@ namespace kwa::asyncio {
         nonblock_socket(fd);
     }
 
-    Socket::Socket(Socket& s): _fd(s._fd), _self_fd(false) {
+    Socket::Socket(Socket& s):
+        _fd(s._fd),
+        _self_fd(false),
+        _host(s._host),
+        _port(s._port)
+    {
         //
     }
 
     Socket::Socket(Socket&& s):
         _fd(std::exchange(s._fd, -1)),
-        _self_fd(std::exchange(s._self_fd, false))
+        _self_fd(std::exchange(s._self_fd, false)),
+        _host(std::exchange(s._host, nullptr)),
+        _port(std::exchange(s._port, -1))
     {
         //
     }
