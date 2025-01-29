@@ -15,8 +15,8 @@ int main() noexcept {
                     auto now = asyncio::Clock::now();
                     loop.call_later(std::chrono::milliseconds(500), [now] {
                         auto t = asyncio::Clock::now();
-                        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(t - now);
-                        expect(duration.count() > 499 and duration.count() < 501);
+                        auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(t - now);
+                        expect(duration.count() > 500000000-1 and duration.count() < 500000000+1);
                     });
                     co_await asyncio::sleep<600>();
                 }()
@@ -31,8 +31,8 @@ int main() noexcept {
                     auto now = asyncio::Clock::now();
                     loop.call_at(now + std::chrono::milliseconds(500), [now] {
                         auto t = asyncio::Clock::now();
-                        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(t - now);
-                        expect(duration.count() > 499 && duration.count() < 501);
+                        auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(t - now);
+                        expect(duration.count() > 500000000-1 and duration.count() < 500000000+1);
                     });
                     co_await asyncio::sleep<600>();
                 }()
