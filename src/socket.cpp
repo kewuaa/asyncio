@@ -68,6 +68,7 @@ namespace kwa::asyncio {
         _own_fd = false;
         _host = s._host;
         _port = s._port;
+        return *this;
     }
 
     Socket& Socket::operator=(Socket&& s) noexcept {
@@ -75,6 +76,7 @@ namespace kwa::asyncio {
         _own_fd = std::exchange(s._own_fd, false);
         _host = std::exchange(s._host, nullptr);
         _port = std::exchange(s._port, -1);
+        return *this;
     }
 
     std::expected<void, Exception> Socket::bind(const char* host, short port) noexcept {
