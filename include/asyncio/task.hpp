@@ -61,6 +61,7 @@ namespace kwa::asyncio {
 
             Task& operator=(Task&& task) noexcept {
                 _handle = std::exchange(task._handle, nullptr);
+                return *this;
             }
 
             ~Task() {
