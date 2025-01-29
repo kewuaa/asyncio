@@ -5,11 +5,11 @@
 
 #include "tiny_thread_pool.hpp"
 
-#include "config.hpp"
 #include "concepts.hpp"
 #include "types.hpp"
 #include "timer.hpp"
-#include "export.hpp"
+#include "asyncio_config.hpp"
+#include "asyncio_export.hpp"
 
 
 namespace kwa::asyncio {

@@ -3,7 +3,7 @@
 #include <sys/epoll.h>
 
 #include "types.hpp"
-#include "export.hpp"
+#include "asyncio_export.hpp"
 
 
 namespace kwa::asyncio {

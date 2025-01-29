@@ -2,7 +2,7 @@
 #include <format>
 #include <expected>
 
-#include "export.hpp"
+#include "asyncio_export.hpp"
 
 
 namespace kwa::asyncio {

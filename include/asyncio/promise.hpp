@@ -2,7 +2,7 @@
 #include <cassert>
 
 #include "concepts.hpp"
-#include "export.hpp"
+#include "asyncio_export.hpp"
 
 
 namespace kwa::asyncio {
