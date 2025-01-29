@@ -10,6 +10,8 @@
 
 
 namespace kwa::asyncio {
+    using namespace types;
+
     class ASYNCIO_EXPORT Socket {
         private:
             class Reader;
@@ -28,9 +30,9 @@ namespace kwa::asyncio {
             ~Socket();
             Socket& operator=(Socket& s) noexcept;
             Socket& operator=(Socket&& s) noexcept;
-            [[nodiscard]] std::expected<void, Exception> bind(const char* host, short port) noexcept;
-            [[nodiscard]] std::expected<void, Exception> listen(int max_listen_num) const noexcept;
-            [[nodiscard]] std::expected<void, Exception> connect(const char* host, short port) const noexcept;
+            [[nodiscard]] Result<> bind(const char* host, short port) noexcept;
+            [[nodiscard]] Result<> listen(int max_listen_num) const noexcept;
+            [[nodiscard]] Result<> connect(const char* host, short port) const noexcept;
             [[nodiscard]] Accepter accept() const noexcept;
             [[nodiscard]] Reader read(char* buffer, size_t size) const noexcept;
             [[nodiscard]] Task<> write(const char* buffer, size_t size) const noexcept;
@@ -71,7 +73,7 @@ namespace kwa::asyncio {
                 );
             }
 
-            std::expected<int, Exception> await_resume() noexcept;
+            Result<int> await_resume() noexcept;
 
             static_assert(concepts::Awaitable<Reader>, "Reader not satisfy the Awaitable concept");
     };
@@ -111,7 +113,7 @@ namespace kwa::asyncio {
                 );
             }
 
-            std::expected<int, Exception> await_resume() noexcept;
+            Result<int> await_resume() noexcept;
 
             static_assert(concepts::Awaitable<Writer>, "Writer not satisfy the Awaitable concept");
     };

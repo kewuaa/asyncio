@@ -4,6 +4,8 @@
 
 
 namespace kwa::asyncio {
+    using namespace types;
+
     class EventLoop;
     class Timer {
         friend EventLoop;
@@ -11,16 +13,16 @@ namespace kwa::asyncio {
         private:
             static uint32_t _ID;
             uint32_t _id { 0 };
-            types::TimePoint _when;
+            TimePoint _when;
             bool _canceled { false };
-            types::EventLoopHandle _callback;
+            EventLoopHandle _callback;
         public:
             struct Compare;
             Timer() = delete;
             Timer(Timer&) = delete;
             Timer& operator=(Timer&) = delete;
             Timer(Timer&& timer);
-            Timer(types::TimePoint when, types::EventLoopHandle&& callback);
+            Timer(TimePoint when, EventLoopHandle&& callback);
             Timer& operator=(Timer&& timer) noexcept;
             void cancel() noexcept;
             inline bool canceled() const noexcept { return _canceled; }

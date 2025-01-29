@@ -6,9 +6,11 @@
 
 
 namespace kwa::asyncio {
+    using namespace types;
+
     uint32_t Timer::_ID = 0;
 
-    Timer::Timer(types::TimePoint when, types::EventLoopHandle&& callback):
+    Timer::Timer(TimePoint when, EventLoopHandle&& callback):
         _id(++_ID),
         _when(when),
         _callback(std::move(callback))

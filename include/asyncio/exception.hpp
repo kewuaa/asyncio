@@ -56,6 +56,4 @@ namespace kwa::asyncio {
         public:
             ConnectionClosed();
     };
-
-    using Error = std::unexpected<Exception>;
 }

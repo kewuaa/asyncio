@@ -24,7 +24,7 @@ namespace kwa::asyncio {
         return epoll;
     }
 
-    void Epoll::add_reader(int fd, types::EventLoopHandle&& handle) noexcept {
+    void Epoll::add_reader(int fd, EventLoopHandle&& handle) noexcept {
         Event* event;
         int op;
         if (_map.find(fd) == _map.end()) {
@@ -47,7 +47,7 @@ namespace kwa::asyncio {
         spdlog::info("successfully add reader for fd {}", fd);
     }
 
-    void Epoll::add_writer(int fd, types::EventLoopHandle&& handle) noexcept {
+    void Epoll::add_writer(int fd, EventLoopHandle&& handle) noexcept {
         Event* event;
         int op;
         if (_map.find(fd) == _map.end()) {

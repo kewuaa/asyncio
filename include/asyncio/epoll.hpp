@@ -7,6 +7,8 @@
 
 
 namespace kwa::asyncio {
+    using namespace types;
+
     class ASYNCIO_EXPORT Epoll {
         public:
             struct Event;
@@ -22,8 +24,8 @@ namespace kwa::asyncio {
             Epoll& operator=(Epoll&) = delete;
             Epoll& operator=(Epoll&&) = delete;
             ~Epoll();
-            void add_reader(int fd, types::EventLoopHandle&& handle) noexcept;
-            void add_writer(int fd, types::EventLoopHandle&& handle) noexcept;
+            void add_reader(int fd, EventLoopHandle&& handle) noexcept;
+            void add_writer(int fd, EventLoopHandle&& handle) noexcept;
             void remove_reader(int fd) noexcept;
             void remove_writer(int fd) noexcept;
 
@@ -33,8 +35,8 @@ namespace kwa::asyncio {
     };
 
     struct Epoll::Event {
-        types::EventLoopHandle reader { nullptr };
-        types::EventLoopHandle writer { nullptr };
+        EventLoopHandle reader { nullptr };
+        EventLoopHandle writer { nullptr };
         epoll_event event {};
     };
 }

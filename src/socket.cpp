@@ -79,7 +79,7 @@ namespace kwa::asyncio {
         return *this;
     }
 
-    std::expected<void, Exception> Socket::bind(const char* host, short port) noexcept {
+    Result<> Socket::bind(const char* host, short port) noexcept {
         _host = host;
         _port = port;
         sockaddr_in addr { 0 };
@@ -94,7 +94,7 @@ namespace kwa::asyncio {
         return {};
     }
 
-    std::expected<void, Exception> Socket::listen(int max_listen_num) const noexcept {
+    Result<> Socket::listen(int max_listen_num) const noexcept {
         if (::listen(_fd, max_listen_num) == -1) {
             return Error(Exception(
                 "socket fd {} listen failed", _fd
@@ -104,7 +104,7 @@ namespace kwa::asyncio {
         return {};
     }
 
-    std::expected<void, Exception> Socket::connect(const char* host, short port) const noexcept {
+    Result<> Socket::connect(const char* host, short port) const noexcept {
         sockaddr_in addr { 0 };
         init_address(addr, host, port);
         if (::connect(_fd, (sockaddr*)&addr, sizeof(addr)) == -1) {
@@ -175,7 +175,7 @@ namespace kwa::asyncio {
         }
     }
 
-    std::expected<int, Exception> Socket::Reader::await_resume() noexcept {
+    Result<int> Socket::Reader::await_resume() noexcept {
         if (_read_size > 0) {
             return _read_size;
         }
@@ -219,7 +219,7 @@ namespace kwa::asyncio {
         }
     }
 
-    std::expected<int, Exception> Socket::Writer::await_resume() noexcept {
+    Result<int> Socket::Writer::await_resume() noexcept {
         if (_write_size == _buffer_size) {
             return _write_size;
         }

@@ -11,7 +11,7 @@
 
 namespace kwa::asyncio {
     static auto clock_resolution = std::chrono::milliseconds(
-        1000 * types::Clock::period::num / types::Clock::period::den
+        1000 * Clock::period::num / Clock::period::den
     );
 
     static void signal_handle(int sig) noexcept {
@@ -114,24 +114,24 @@ namespace kwa::asyncio {
         }
     }
 
-    void EventLoop::call_soon(types::EventLoopHandle&& callback) noexcept {
+    void EventLoop::call_soon(EventLoopHandle&& callback) noexcept {
         _ready.push(std::move(callback));
     }
 
-    void EventLoop::call_soon_threadsafe(types::EventLoopHandle&& callback) noexcept {
+    void EventLoop::call_soon_threadsafe(EventLoopHandle&& callback) noexcept {
         std::lock_guard<std::mutex> lock { _lock };
         _ready.push(std::move(callback));
     }
 
-    std::shared_ptr<Timer> EventLoop::call_at(types::TimePoint when, types::EventLoopHandle&& callback) noexcept {
+    std::shared_ptr<Timer> EventLoop::call_at(TimePoint when, EventLoopHandle&& callback) noexcept {
         auto timer = std::make_shared<Timer>(when, std::move(callback));
         _schedule.push_back(timer);
         std::push_heap(_schedule.begin(), _schedule.end());
         return timer;
     }
 
-    std::shared_ptr<Timer> EventLoop::call_later(std::chrono::milliseconds delay, types::EventLoopHandle&& callback) noexcept {
-        auto now = types::Clock::now();
+    std::shared_ptr<Timer> EventLoop::call_later(std::chrono::milliseconds delay, EventLoopHandle&& callback) noexcept {
+        auto now = Clock::now();
         auto when = now + delay;
         return call_at(when, std::move(callback));
     }

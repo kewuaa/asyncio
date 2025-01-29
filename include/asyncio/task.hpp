@@ -5,7 +5,6 @@
 
 #include <spdlog/spdlog.h>
 
-#include "result.hpp"
 #include "promise.hpp"
 #include "event_loop.hpp"
 #include "exception.hpp"
@@ -13,6 +12,8 @@
 
 
 namespace kwa::asyncio {
+    using namespace types;
+
     template<typename R = void>
     class Task {
         friend EventLoop;
@@ -45,7 +46,7 @@ namespace kwa::asyncio {
                 _handle.promise().is_root = true;
             }
         public:
-            using result_type = std::expected<R, Exception>;
+            using result_type =  Result<R>;
             using promise_type = Promise;
             using Callback = std::function<void(const result_type&)>;
 

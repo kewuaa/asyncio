@@ -12,9 +12,9 @@ int main() noexcept {
             auto res = asyncio::run(
                 [] -> asyncio::Task<> {
                     auto& loop = asyncio::EventLoop::get();
-                    auto now = asyncio::types::Clock::now();
+                    auto now = asyncio::Clock::now();
                     loop.call_later(std::chrono::milliseconds(500), [now] {
-                        auto t = asyncio::types::Clock::now();
+                        auto t = asyncio::Clock::now();
                         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(t - now);
                         expect(duration.count() > 499 and duration.count() < 501);
                     });
@@ -28,9 +28,9 @@ int main() noexcept {
             auto res = asyncio::run(
                 [] -> asyncio::Task<> {
                     auto& loop = asyncio::EventLoop::get();
-                    auto now = asyncio::types::Clock::now();
+                    auto now = asyncio::Clock::now();
                     loop.call_at(now + std::chrono::milliseconds(500), [now] {
-                        auto t = asyncio::types::Clock::now();
+                        auto t = asyncio::Clock::now();
                         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(t - now);
                         expect(duration.count() > 499 && duration.count() < 501);
                     });

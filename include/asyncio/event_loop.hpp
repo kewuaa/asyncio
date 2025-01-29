@@ -13,6 +13,8 @@
 
 
 namespace kwa::asyncio {
+    using namespace types;
+
     template<typename T>
     class FutureAwaiter;
 
@@ -22,7 +24,7 @@ namespace kwa::asyncio {
             bool _stop { false };
             int _schedule_canceled_count { 0 };
             std::vector<std::shared_ptr<Timer>> _schedule {};
-            std::queue<types::EventLoopHandle> _ready {};
+            std::queue<EventLoopHandle> _ready {};
             std::mutex _lock {};
 
             EventLoop();
@@ -32,8 +34,8 @@ namespace kwa::asyncio {
                 static TinyThreadPool pool { THREAD_POOL_SIZE };
                 return pool;
             }
-            static inline types::TimePoint _time() noexcept {
-                return types::Clock::now();
+            static inline TimePoint _time() noexcept {
+                return Clock::now();
             }
         public:
             [[nodiscard]] static EventLoop& get() noexcept;
@@ -41,10 +43,10 @@ namespace kwa::asyncio {
             EventLoop(EventLoop&&) = delete;
             EventLoop& operator=(EventLoop&) = delete;
             EventLoop& operator=(EventLoop&&) = delete;
-            void call_soon(types::EventLoopHandle&& callback) noexcept;
-            void call_soon_threadsafe(types::EventLoopHandle&& callback) noexcept;
-            std::shared_ptr<Timer> call_at(types::TimePoint when, types::EventLoopHandle&& callback) noexcept;
-            std::shared_ptr<Timer> call_later(std::chrono::milliseconds delay, types::EventLoopHandle&& callback) noexcept;
+            void call_soon(EventLoopHandle&& callback) noexcept;
+            void call_soon_threadsafe(EventLoopHandle&& callback) noexcept;
+            std::shared_ptr<Timer> call_at(TimePoint when, EventLoopHandle&& callback) noexcept;
+            std::shared_ptr<Timer> call_later(std::chrono::milliseconds delay, EventLoopHandle&& callback) noexcept;
             void stop() noexcept;
             void run() noexcept;
 
