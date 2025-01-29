@@ -128,7 +128,7 @@ namespace kwa::asyncio {
     };
 
     template<typename R>
-    struct Task<R>::Promise final: public Result<R>, public BasePromise {
+    struct Task<R>::Promise final: public PromiseResult<R>, public BasePromise {
         bool is_root { false };
         std::vector<Callback> done_callbacks {};
         std::optional<Exception> exception { std::nullopt };
