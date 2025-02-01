@@ -1,13 +1,14 @@
 #pragma once
 #include "types.hpp"
 #include "concepts.hpp"
+#include "asyncio_export.hpp"
 
 
 namespace kwa::asyncio {
     using namespace types;
 
     class EventLoop;
-    class Timer {
+    class ASYNCIO_EXPORT Timer {
         friend EventLoop;
         friend bool operator<(const Timer& t1, const Timer& t2);
         private:
