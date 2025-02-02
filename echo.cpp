@@ -12,7 +12,7 @@ asyncio::Task<> response(int conn) {
         if (!res) {
             break;
         }
-        spdlog::info("recv from socket fd {}: {}", conn, buf);
+        SPDLOG_INFO("recv from socket fd {}: {}", conn, buf);
     }
 }
 
@@ -20,17 +20,17 @@ asyncio::Task<> response(int conn) {
 asyncio::Task<> start_server() noexcept {
     auto s = asyncio::Socket();
     if (auto res = s.bind("127.0.0.1", 12345); !res) {
-        spdlog::error(res.error().message());
+        SPDLOG_ERROR(res.error().message());
         co_return;
     }
     if (auto res = s.listen(10); !res) {
-        spdlog::error(res.error().message());
+        SPDLOG_ERROR(res.error().message());
         co_return;
     }
     std::vector<asyncio::Task<>> tasks;
     while (true) {
         auto conn = co_await s.accept();
-        spdlog::info("accept socket fd {}", conn);
+        SPDLOG_INFO("accept socket fd {}", conn);
         tasks.push_back(response(conn));
     }
 }
@@ -39,6 +39,6 @@ asyncio::Task<> start_server() noexcept {
 int main() {
     auto res = asyncio::run(start_server());
     if (!res) {
-        spdlog::error(res.error().message());
+        SPDLOG_ERROR(res.error().message());
     }
 }

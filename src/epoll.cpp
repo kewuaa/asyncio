@@ -9,13 +9,13 @@
 
 namespace kwa::asyncio {
     Epoll::Epoll(): _fd(epoll_create1(0)) {
-        spdlog::info("successfully create epoll fd {}", _fd);
+        SPDLOG_INFO("successfully create epoll fd {}", _fd);
     }
 
     Epoll::~Epoll() {
         if (_fd != -1) {
             close(_fd);
-            spdlog::info("close epoll fd {}", _fd);
+            SPDLOG_INFO("close epoll fd {}", _fd);
         }
     }
 
@@ -44,7 +44,7 @@ namespace kwa::asyncio {
             "failed to add reader for fd {}",
             fd
         );
-        spdlog::info("successfully add reader for fd {}", fd);
+        SPDLOG_INFO("successfully add reader for fd {}", fd);
     }
 
     void Epoll::add_writer(int fd, EventLoopHandle&& handle) noexcept {
@@ -67,13 +67,13 @@ namespace kwa::asyncio {
             "failed to add writer for fd {}",
             fd
         );
-        spdlog::info("successfully add writer for fd {}", fd);
+        SPDLOG_INFO("successfully add writer for fd {}", fd);
     }
 
     void Epoll::remove_reader(int fd) noexcept {
         exit_if(_map.find(fd) == _map.end(), "fd {} not register yet", fd);
         if (!_map[fd].reader) {
-            spdlog::warn("reader of fd {} not registered", fd);
+            SPDLOG_WARN("reader of fd {} not registered", fd);
         }
         _map[fd].reader = nullptr;
         _map[fd].event.events &= ~EPOLLIN;
@@ -91,13 +91,13 @@ namespace kwa::asyncio {
                 fd
             );
         }
-        spdlog::info("successfully remove reader for fd {}", fd);
+        SPDLOG_INFO("successfully remove reader for fd {}", fd);
     }
 
     void Epoll::remove_writer(int fd) noexcept {
         exit_if(_map.find(fd) == _map.end(), "fd {} not register yet", fd);
         if (!_map[fd].writer) {
-            spdlog::warn("writer of fd {} not registered", fd);
+            SPDLOG_WARN("writer of fd {} not registered", fd);
         }
         _map[fd].writer = nullptr;
         _map[fd].event.events &= ~EPOLLOUT;
@@ -115,6 +115,6 @@ namespace kwa::asyncio {
                 fd
             );
         }
-        spdlog::info("successfully remove writer for fd {}", fd);
+        SPDLOG_INFO("successfully remove writer for fd {}", fd);
     }
 }

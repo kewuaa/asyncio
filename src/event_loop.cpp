@@ -138,7 +138,7 @@ namespace kwa::asyncio {
 
     void EventLoop::stop() noexcept {
         _stop = true;
-        spdlog::info("event loop stop");
+        SPDLOG_INFO("event loop stop");
     }
 
     /// run the event loop

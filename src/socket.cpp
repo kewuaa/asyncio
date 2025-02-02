@@ -30,7 +30,7 @@ namespace kwa::asyncio {
     ///ASocket
     ////////////////////////////////////////////////////
     Socket::Socket(): _fd(socket(AF_INET, SOCK_STREAM, 0)), _own_fd(true) {
-        spdlog::info("successfully open socket fd {}", _fd);
+        SPDLOG_INFO("successfully open socket fd {}", _fd);
         nonblock_socket(_fd);
     }
 
@@ -59,7 +59,7 @@ namespace kwa::asyncio {
     Socket::~Socket() {
         if (_own_fd && _fd != -1) {
             close(_fd);
-            spdlog::info("close socket fd {}", _fd);
+            SPDLOG_INFO("close socket fd {}", _fd);
         }
     }
 
@@ -90,7 +90,7 @@ namespace kwa::asyncio {
                 _fd, host, port
             ));
         }
-        spdlog::info("socket fd {} successfully bind to {}:{}", _fd, host, port);
+        SPDLOG_INFO("socket fd {} successfully bind to {}:{}", _fd, host, port);
         return {};
     }
 
@@ -100,7 +100,7 @@ namespace kwa::asyncio {
                 "socket fd {} listen failed", _fd
             ));
         }
-        spdlog::info("start listening");
+        SPDLOG_INFO("start listening");
         return {};
     }
 
@@ -113,7 +113,7 @@ namespace kwa::asyncio {
                 _fd, host, port
             ));
         }
-        spdlog::info("socket fd {} successfully connect to {}:{}", _fd, host, port);
+        SPDLOG_INFO("socket fd {} successfully connect to {}:{}", _fd, host, port);
         return {};
     }
 
@@ -168,7 +168,7 @@ namespace kwa::asyncio {
                     break;
                 }
             } else if (nbytes == 0) {
-                spdlog::info("connection to socket fd {} closed", _fd);
+                SPDLOG_INFO("connection to socket fd {} closed", _fd);
                 _closed = true;
                 break;
             }
@@ -212,7 +212,7 @@ namespace kwa::asyncio {
                     break;
                 }
             } else if (nbytes == 0) {
-                spdlog::info("connection to socket fd {} closed", _fd);
+                SPDLOG_INFO("connection to socket fd {} closed", _fd);
                 _closed = true;
                 break;
             }

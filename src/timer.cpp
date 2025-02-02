@@ -15,7 +15,7 @@ namespace kwa::asyncio {
         _when(when),
         _callback(std::move(callback))
     {
-        spdlog::info("Timer {} created", _id);
+        SPDLOG_INFO("Timer {} created", _id);
     }
 
     Timer::Timer(Timer&& timer):
@@ -38,7 +38,7 @@ namespace kwa::asyncio {
     void Timer::cancel() noexcept {
         _canceled = true;
         EventLoop::get()._schedule_canceled_count++;
-        spdlog::info("Timer {} canceled", _id);
+        SPDLOG_INFO("Timer {} canceled", _id);
     }
 
     bool operator<(const Timer& t1, const Timer& t2) {
