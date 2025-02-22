@@ -9,6 +9,7 @@
 #include "event_loop.hpp"
 #include "exception.hpp"
 #include "concepts.hpp"
+#include "utils.hpp"
 
 
 namespace kwa::asyncio {
@@ -36,10 +37,8 @@ namespace kwa::asyncio {
                 );
             }
 
-            inline void _destroy() noexcept {
-                if (auto h = std::exchange(_handle, nullptr)) {
-                    h.destroy();
-                }
+            inline void _check_valid() const noexcept {
+                exit_if(!valid(), "Invalid Task");
             }
 
             inline void _set_root() const noexcept {
@@ -114,18 +113,22 @@ namespace kwa::asyncio {
             }
 
             inline void cancel() const noexcept {
+                _check_valid();
                 _handle.promise().cancel();
             }
 
             inline bool canceled() const noexcept {
+                _check_valid();
                 return _handle.promise().canceled();
             }
 
             inline void add_done_callback(Callback&& cb) const noexcept {
+                _check_valid();
                 _handle.promise().done_callbacks.push_back(std::move(cb));
             }
 
             inline bool done() const noexcept {
+                _check_valid();
                 return _handle.done();
             }
 
