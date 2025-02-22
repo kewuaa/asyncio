@@ -66,7 +66,13 @@ namespace kwa::asyncio {
             }
 
             ~Task() {
-                _destroy();
+                if (auto h = std::exchange(_handle, nullptr)) {
+                    if (h.done() || h.promise().canceled()) {
+                        h.destroy();
+                    } else {
+                        h.promise().suspend_at_final = false;
+                    }
+                }
             }
 
             bool await_ready() const noexcept {
@@ -131,6 +137,7 @@ namespace kwa::asyncio {
     template<typename R>
     struct Task<R>::Promise final: public PromiseResult<R>, public BasePromise {
         bool is_root { false };
+        bool suspend_at_final { true };
         std::vector<Callback> done_callbacks {};
         std::optional<Exception> exception { std::nullopt };
 
@@ -207,9 +214,17 @@ namespace kwa::asyncio {
             return {};
         }
 
-        std::suspend_always final_suspend() noexcept {
+        struct FinalAwaiter {
+            bool suspend;
+            bool await_ready() noexcept { return !suspend; }
+            template<typename P>
+            requires concepts::Promise<P> || std::is_void_v<P>
+            constexpr void await_suspend(std::coroutine_handle<P> handle) noexcept {}
+            constexpr void await_resume() noexcept {}
+        };
+        FinalAwaiter final_suspend() noexcept {
             if (canceled()) {
-                return {};
+                return { suspend_at_final };
             }
             schedule_callback();
             if (is_root) {
@@ -217,7 +232,7 @@ namespace kwa::asyncio {
             } else {
                 try_resume_parent();
             }
-            return {};
+            return { suspend_at_final };
         }
 
         constexpr void unhandled_exception() noexcept {
