@@ -138,6 +138,26 @@ namespace kwa::asyncio {
     };
 
     template<typename R>
+    struct PromiseResult {
+        protected:
+            std::optional<R> result { std::nullopt };
+        public:
+            template<typename T>
+            requires std::is_same_v<R, typename std::remove_reference_t<T>>
+            void return_value(T&& res) noexcept {
+                result = std::forward<T>(res);
+            }
+    };
+
+    template<>
+    class PromiseResult<void> {
+        public:
+            void return_void() noexcept {
+                //
+            }
+    };
+
+    template<typename R>
     struct Task<R>::Promise final: public PromiseResult<R>, public BasePromise {
         bool is_root { false };
         bool suspend_at_final { true };
