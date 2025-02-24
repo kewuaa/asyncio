@@ -1,4 +1,6 @@
 #pragma once
+
+#include "handle.hpp"
 #include "types.hpp"
 #include "concepts.hpp"
 #include "asyncio_export.hpp"
@@ -8,25 +10,19 @@ namespace kwa::asyncio {
     using namespace types;
 
     class EventLoop;
-    class ASYNCIO_EXPORT Timer {
+    class ASYNCIO_EXPORT Timer: public Handle {
         friend EventLoop;
-        friend bool operator<(const Timer& t1, const Timer& t2);
-        private:
-            static uint32_t _ID;
-            uint32_t _id { 0 };
-            TimePoint _when;
-            bool _canceled { false };
-            EventLoopHandle _callback;
         public:
             struct Compare;
-            Timer() = delete;
-            Timer(Timer&) = delete;
-            Timer& operator=(Timer&) = delete;
             Timer(Timer&& timer);
-            Timer(TimePoint when, EventLoopHandle&& callback);
+            Timer(TimePoint when, EventLoopCallback&& callback);
             Timer& operator=(Timer&& timer) noexcept;
-            void cancel() noexcept;
-            inline bool canceled() const noexcept { return _canceled; }
+            void cancel() noexcept override;
+            void run() noexcept override;
+        private:
+            static size_t _canceled_count;
+            TimePoint _when;
+            EventLoopCallback _callback { nullptr };
     };
 
     struct Timer::Compare {

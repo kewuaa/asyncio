@@ -1,8 +1,9 @@
 #pragma once
+#include <optional>
 #include <unordered_map>
 #include <sys/epoll.h>
 
-#include "types.hpp"
+#include "handle.hpp"
 #include "asyncio_export.hpp"
 
 
@@ -24,10 +25,10 @@ namespace kwa::asyncio {
             Epoll& operator=(Epoll&) = delete;
             Epoll& operator=(Epoll&&) = delete;
             ~Epoll();
-            void add_reader(int fd, EventLoopHandle&& handle) noexcept;
-            void add_writer(int fd, EventLoopHandle&& handle) noexcept;
-            void remove_reader(int fd) noexcept;
-            void remove_writer(int fd) noexcept;
+            void add_reader(int, Handle::ID, EventLoopCallback&&) noexcept;
+            void add_writer(int, Handle::ID, EventLoopCallback&&) noexcept;
+            void remove_reader(int) noexcept;
+            void remove_writer(int) noexcept;
 
             [[nodiscard]] inline int wait(epoll_event* events, int event_num, int timeout) noexcept {
                 return epoll_wait(_fd, events, event_num, timeout);
@@ -35,8 +36,8 @@ namespace kwa::asyncio {
     };
 
     struct Epoll::Event {
-        EventLoopHandle reader { nullptr };
-        EventLoopHandle writer { nullptr };
+        std::optional<EventLoopHandle> reader { std::nullopt };
+        std::optional<EventLoopHandle> writer { std::nullopt };
         epoll_event event {};
     };
 }

@@ -27,11 +27,10 @@ asyncio::Task<> start_server() noexcept {
         SPDLOG_ERROR(res.error().message());
         co_return;
     }
-    std::vector<asyncio::Task<>> tasks;
     while (true) {
         auto conn = co_await s.accept();
         SPDLOG_INFO("accept socket fd {}", conn);
-        tasks.push_back(response(conn));
+        response(conn);
     }
 }
 

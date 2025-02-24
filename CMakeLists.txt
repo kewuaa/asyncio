@@ -56,7 +56,8 @@ TARGET_SOURCES(
         src/epoll.cpp
         src/socket.cpp
         src/timer.cpp
-        src/promise.cpp
+        src/handle.cpp
+        src/coro_handle.cpp
         src/exception.cpp
 )
 TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME} PUBLIC include)

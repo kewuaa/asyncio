@@ -5,10 +5,10 @@
 
 #include <spdlog/spdlog.h>
 
-#include "promise.hpp"
 #include "event_loop.hpp"
 #include "exception.hpp"
 #include "concepts.hpp"
+#include "handle.hpp"
 #include "utils.hpp"
 
 
@@ -28,21 +28,11 @@ namespace kwa::asyncio {
             Task(Promise& p):
                 _handle(CorounineHandle::from_promise(p))
             {
-                EventLoop::get().call_soon(
-                    [handle = _handle]() {
-                        if (!handle.promise().canceled()) {
-                            handle.resume();
-                        }
-                    }
-                );
+                EventLoop::get().call_soon(p);
             }
 
             inline void _check_valid() const noexcept {
                 exit_if(!valid(), "Invalid Task");
-            }
-
-            inline void _set_root() const noexcept {
-                _handle.promise().is_root = true;
             }
         public:
             using result_type =  Result<R>;
@@ -87,7 +77,7 @@ namespace kwa::asyncio {
             template<typename P>
             requires concepts::Promise<P> || std::same_as<P, void>
             void await_suspend(std::coroutine_handle<P> handle) const noexcept {
-                _handle.promise().set_parent(&handle.promise());
+                _handle.promise().set_parent(handle.promise());
             }
 
             result_type await_resume() const & noexcept {
@@ -132,6 +122,11 @@ namespace kwa::asyncio {
                 return _handle.done();
             }
 
+            inline Handle::ID id() const noexcept {
+                _check_valid();
+                return _handle.promise().id();
+            }
+
             inline bool valid() const noexcept {
                 return _handle != nullptr;
             }
@@ -158,8 +153,7 @@ namespace kwa::asyncio {
     };
 
     template<typename R>
-    struct Task<R>::Promise final: public PromiseResult<R>, public BasePromise {
-        bool is_root { false };
+    struct Task<R>::Promise final: public PromiseResult<R>, public CoroHandle {
         bool suspend_at_final { true };
         std::vector<Callback> done_callbacks {};
         std::optional<Exception> exception { std::nullopt };
@@ -182,7 +176,7 @@ namespace kwa::asyncio {
         void set_exception(E&& e) noexcept {
             exception = std::forward<E>(e);
             schedule_callback();
-            if (is_root) {
+            if (EventLoop::get().is_root(id())) {
                 EventLoop::get().stop();
             } else {
                 try_resume_parent();
@@ -222,7 +216,7 @@ namespace kwa::asyncio {
             return {};
         }
 
-        inline void resume() noexcept override {
+        inline void run() noexcept override {
             CorounineHandle::from_promise(*this).resume();
         }
 
@@ -250,7 +244,7 @@ namespace kwa::asyncio {
                 return { suspend_at_final };
             }
             schedule_callback();
-            if (is_root) {
+            if (EventLoop::get().is_root(id())) {
                 EventLoop::get().stop();
             } else {
                 try_resume_parent();

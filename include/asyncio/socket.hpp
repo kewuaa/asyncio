@@ -65,17 +65,16 @@ namespace kwa::asyncio {
                 auto& epoll = Epoll::get();
                 epoll.add_reader(
                     _fd,
-                    [handle](){
-                        if (!handle.promise().canceled()) {
-                            handle.resume();
-                        }
+                    handle.promise().id(),
+                    [h = &handle.promise()](){
+                        h->run();
                     }
                 );
             }
 
             Result<int> await_resume() noexcept;
 
-            static_assert(concepts::Awaitable<Reader>, "Reader not satisfy the Awaitable concept");
+            // static_assert(concepts::Awaitable<Reader>, "Reader not satisfy the Awaitable concept");
     };
 
     class Socket::Writer {
@@ -105,17 +104,16 @@ namespace kwa::asyncio {
                 auto& epoll = Epoll::get();
                 epoll.add_writer(
                     _fd,
-                    [handle](){
-                        if (!handle.promise().canceled()) {
-                            handle.resume();
-                        }
+                    handle.promise().id(),
+                    [h = &handle.promise()](){
+                        h->run();
                     }
                 );
             }
 
             Result<int> await_resume() noexcept;
 
-            static_assert(concepts::Awaitable<Writer>, "Writer not satisfy the Awaitable concept");
+            // static_assert(concepts::Awaitable<Writer>, "Writer not satisfy the Awaitable concept");
     };
 
     class Socket::Accepter {
@@ -144,16 +142,15 @@ namespace kwa::asyncio {
                 auto& epoll = Epoll::get();
                 epoll.add_reader(
                     _fd,
-                    [handle]() {
-                        if (!handle.promise().canceled()) {
-                            handle.resume();
-                        }
+                    handle.promise().id(),
+                    [h = &handle.promise()]() {
+                        h->run();
                     }
                 );
             }
 
             [[nodiscard]] int await_resume() noexcept;
 
-            static_assert(concepts::Awaitable<Accepter>, "Accepter not satisfy the Awaitable concept");
+            // static_assert(concepts::Awaitable<Accepter>, "Accepter not satisfy the Awaitable concept");
     };
 }

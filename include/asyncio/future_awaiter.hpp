@@ -75,10 +75,9 @@ namespace kwa::asyncio {
                 pipe2(_fd, O_NONBLOCK);
                 Epoll::get().add_reader(
                     _fd[0],
-                    [p = static_cast<BasePromise*>(&handle.promise())]() {
-                        if (!p->canceled()) {
-                            p->resume();
-                        }
+                    handle.promise().id(),
+                    [h = &handle.promise()]() {
+                        h->run();
                     }
                 );
                 return true;

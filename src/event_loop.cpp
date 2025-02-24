@@ -20,7 +20,7 @@ namespace kwa::asyncio {
         }
     }
 
-    EventLoop::EventLoop() {
+    EventLoop::EventLoop() noexcept {
         signal(SIGINT, signal_handle);
     }
 
@@ -37,11 +37,11 @@ namespace kwa::asyncio {
         auto num = epoll.wait(events, MAX_EVENTS_NUM, timeout);
         for (int i = 0; i < num; i++) {
             auto ev = (Epoll::Event*)events[i].data.ptr;
-            if ((events[i].events & EPOLLIN) && ev->reader) {
-                _ready.push(ev->reader);
+            if ((events[i].events & EPOLLIN) && ev->reader.has_value()) {
+                _ready.push(*ev->reader);
             }
-            if ((events[i].events & EPOLLOUT) && ev->writer) {
-                _ready.push(ev->writer);
+            if ((events[i].events & EPOLLOUT) && ev->writer.has_value()) {
+                _ready.push(*ev->writer);
             }
         }
     }
@@ -50,23 +50,23 @@ namespace kwa::asyncio {
     void EventLoop::_run_once() noexcept {
         if (
             _schedule.size() > _MIN_SCHEDULED_TIMER_HANDLES
-            && _schedule_canceled_count / (double)_schedule.size() > _MIN_CANCELLED_TIMER_HANDLES_FRACTION
+            && Timer::_canceled_count / (double)_schedule.size() > _MIN_CANCELLED_TIMER_HANDLES_FRACTION
         ) {
             decltype(_schedule) schedule;
-            schedule.reserve(_schedule.size() - _schedule_canceled_count);
+            schedule.reserve(_schedule.size() - Timer::_canceled_count);
             for (auto& timer : _schedule) {
-                if (!timer->_canceled) {
+                if (!timer->canceled()) {
                     schedule.push_back(timer);
                 }
             }
-            std::make_heap(schedule.begin(), schedule.end());
+            std::make_heap(schedule.begin(), schedule.end(), Timer::Compare());
             _schedule.swap(schedule);
-            _schedule_canceled_count = 0;
+            Timer::_canceled_count = 0;
         } else {
-            while (!_schedule.empty() && _schedule.front()->_canceled) {
-                std::pop_heap(_schedule.begin(), _schedule.end());
+            while (!_schedule.empty() && _schedule.front()->canceled()) {
+                std::pop_heap(_schedule.begin(), _schedule.end(), Timer::Compare());
                 _schedule.pop_back();
-                _schedule_canceled_count -= 1;
+                Timer::_canceled_count -= 1;
             }
         }
 
@@ -90,47 +90,51 @@ namespace kwa::asyncio {
             if (_schedule[0]->_when > end_time) {
                 break;
             }
-            _ready.push(
-                [timer = _schedule[0]]() {
-                    if (!timer->_canceled) {
-                        timer->_callback();
-                    }
-                }
-            );
-            std::pop_heap(_schedule.begin(), _schedule.end());
+            _ready.push({ _schedule[0]->id(), [t = _schedule[0]] { t->run(); } });
+            std::pop_heap(_schedule.begin(), _schedule.end(), Timer::Compare());
             _schedule.pop_back();
         }
 
-        while (!_ready.empty()) {
-            if (_stop) {
-                // if loop stop, clear ready queue
-                do {
-                    _ready.pop();
-                } while (!_ready.empty());
-            } else {
-                _ready.front()();
-                _ready.pop();
+        while (!_ready.empty() && !_stop) {
+            if (auto id = _ready.front().id; id == 0 || !Handle::canceled(id)) {
+                _ready.front().cb();
+            } else if (Handle::canceled(id)) {
+                Handle::_canceled_handles.erase(id);
             }
+            _ready.pop();
         }
     }
 
-    void EventLoop::call_soon(EventLoopHandle&& callback) noexcept {
-        _ready.push(std::move(callback));
+    void EventLoop::_cleanup() noexcept {
+        _stop = false;
+        _root_id = 0;
+        while (!_ready.empty()) {
+            _ready.pop();
+        }
+        Handle::_canceled_handles.clear();
     }
 
-    void EventLoop::call_soon_threadsafe(EventLoopHandle&& callback) noexcept {
+    void EventLoop::call_soon(EventLoopCallback&& callback) noexcept {
+        _ready.push({ 0, std::move(callback) });
+    }
+
+    void EventLoop::call_soon(Handle& handle) noexcept {
+        _ready.push({ handle.id(), [h = &handle] { h->run(); } });
+    }
+
+    void EventLoop::call_soon_threadsafe(EventLoopCallback&& callback) noexcept {
         std::lock_guard<std::mutex> lock { _lock };
-        _ready.push(std::move(callback));
+        call_soon(std::move(callback));
     }
 
-    std::shared_ptr<Timer> EventLoop::call_at(TimePoint when, EventLoopHandle&& callback) noexcept {
+    std::shared_ptr<Timer> EventLoop::call_at(TimePoint when, EventLoopCallback&& callback) noexcept {
         auto timer = std::make_shared<Timer>(when, std::move(callback));
         _schedule.push_back(timer);
-        std::push_heap(_schedule.begin(), _schedule.end());
+        std::push_heap(_schedule.begin(), _schedule.end(), Timer::Compare());
         return timer;
     }
 
-    std::shared_ptr<Timer> EventLoop::call_later(std::chrono::milliseconds delay, EventLoopHandle&& callback) noexcept {
+    std::shared_ptr<Timer> EventLoop::call_later(std::chrono::milliseconds delay, EventLoopCallback&& callback) noexcept {
         auto now = Clock::now();
         auto when = now + delay;
         return call_at(when, std::move(callback));
@@ -146,5 +150,6 @@ namespace kwa::asyncio {
         while (!_stop) {
             _run_once();
         }
+        _cleanup();
     }
 }
