@@ -36,6 +36,7 @@ namespace kwa::asyncio {
             [[nodiscard]] Accepter accept() const noexcept;
             [[nodiscard]] Reader read(char* buffer, size_t size) const noexcept;
             [[nodiscard]] Task<> write(const char* buffer, size_t size) const noexcept;
+            inline int fd() const noexcept { return _fd; };
     };
 
     class Socket::Reader {
