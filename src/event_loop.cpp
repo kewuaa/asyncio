@@ -95,13 +95,17 @@ namespace kwa::asyncio {
             _schedule.pop_back();
         }
 
+        std::vector<Handle::ID> canceled {};
         while (!_ready.empty() && !_stop) {
             if (auto id = _ready.front().id; id == 0 || !Handle::canceled(id)) {
                 _ready.front().cb();
             } else if (Handle::canceled(id)) {
-                Handle::_canceled_handles.erase(id);
+                canceled.push_back(id);
             }
             _ready.pop();
+        }
+        for (auto id : canceled) {
+            Handle::_canceled_handles.erase(id);
         }
     }
 
