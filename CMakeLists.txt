@@ -45,9 +45,15 @@ if (CMAKE_BUILD_TYPE STREQUAL Debug)
     TARGET_COMPILE_OPTIONS(${PROJECT_NAME} PUBLIC "-D_DEBUG")
 endif()
 
-CONFIGURE_FILE(include/asyncio/config.hpp.in ${CMAKE_CURRENT_BINARY_DIR}/include/asyncio_config.hpp)
+CONFIGURE_FILE(
+    include/asyncio/config.hpp.in
+    ${CMAKE_CURRENT_BINARY_DIR}/include/asyncio_config.hpp
+)
 
-GENERATE_EXPORT_HEADER(${PROJECT_NAME} EXPORT_FILE_NAME ${CMAKE_CURRENT_BINARY_DIR}/include/asyncio_export.hpp)
+GENERATE_EXPORT_HEADER(
+    ${PROJECT_NAME}
+    EXPORT_FILE_NAME ${CMAKE_CURRENT_BINARY_DIR}/include/asyncio_export.hpp
+)
 
 TARGET_SOURCES(
     ${PROJECT_NAME}
@@ -60,8 +66,12 @@ TARGET_SOURCES(
         src/coro_handle.cpp
         src/exception.cpp
 )
-TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME} PUBLIC include)
-TARGET_INCLUDE_DIRECTORIES(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/include)
+TARGET_INCLUDE_DIRECTORIES(
+    ${PROJECT_NAME}
+    PUBLIC
+        include
+        ${CMAKE_CURRENT_BINARY_DIR}/include
+)
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} PUBLIC spdlog::spdlog)
 TARGET_LINK_LIBRARIES(${PROJECT_NAME} PUBLIC tiny_thread_pool)
 
