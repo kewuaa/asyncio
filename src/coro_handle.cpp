@@ -2,31 +2,33 @@
 #include "asyncio/handle.hpp"
 
 
-namespace kwa::asyncio {
-    void CoroHandle::set_parent(CoroHandle& handle) noexcept {
-        _parent = &handle;
+ASYNCIO_NS_BEGIN()
+
+void CoroHandle::set_parent(CoroHandle& handle) noexcept {
+    _parent = &handle;
+}
+
+void CoroHandle::try_resume_parent() const noexcept {
+    if (!_parent) {
+        return;
     }
 
-    void CoroHandle::try_resume_parent() const noexcept {
-        if (!_parent) {
-            return;
-        }
-
-        auto h = _parent;
-        while (h) {
-            if (h->canceled()) {
-                auto ptr = _parent;
-                while (ptr != h) {
-                    ptr->cancel();
-                    ptr = ptr->_parent;
-                }
-                break;
+    auto h = _parent;
+    while (h) {
+        if (h->canceled()) {
+            auto ptr = _parent;
+            while (ptr != h) {
+                ptr->cancel();
+                ptr = ptr->_parent;
             }
-            h = h->_parent;
+            break;
         }
+        h = h->_parent;
+    }
 
-        if (!_parent->canceled()) {
-            EventLoop::get().call_soon(*_parent);
-        }
+    if (!_parent->canceled()) {
+        EventLoop::get().call_soon(*_parent);
     }
 }
+
+ASYNCIO_NS_END

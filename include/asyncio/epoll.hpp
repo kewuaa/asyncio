@@ -4,40 +4,43 @@
 #include <sys/epoll.h>
 
 #include "handle.hpp"
+#include "asyncio_ns.hpp"
 #include "asyncio_export.hpp"
 
 
-namespace kwa::asyncio {
-    using namespace types;
+ASYNCIO_NS_BEGIN()
 
-    class ASYNCIO_EXPORT Epoll {
-        public:
-            struct Event;
-        private:
-            int _fd { -1 };
-            std::unordered_map<int, Event> _map;
+using namespace types;
 
-            Epoll();
-        public:
-            [[nodiscard]] static Epoll& get() noexcept;
-            Epoll(Epoll&) = delete;
-            Epoll(Epoll&&) = delete;
-            Epoll& operator=(Epoll&) = delete;
-            Epoll& operator=(Epoll&&) = delete;
-            ~Epoll();
-            void add_reader(int, Handle::ID, EventLoopCallback&&) noexcept;
-            void add_writer(int, Handle::ID, EventLoopCallback&&) noexcept;
-            void remove_reader(int) noexcept;
-            void remove_writer(int) noexcept;
+class ASYNCIO_EXPORT Epoll {
+public:
+    struct Event;
+private:
+    int _fd { -1 };
+    std::unordered_map<int, Event> _map;
 
-            [[nodiscard]] inline int wait(epoll_event* events, int event_num, int timeout) noexcept {
-                return epoll_wait(_fd, events, event_num, timeout);
-            }
-    };
+    Epoll();
+public:
+    [[nodiscard]] static Epoll& get() noexcept;
+    Epoll(Epoll&) = delete;
+    Epoll(Epoll&&) = delete;
+    Epoll& operator=(Epoll&) = delete;
+    Epoll& operator=(Epoll&&) = delete;
+        ~Epoll();
+    void add_reader(int, Handle::ID, EventLoopCallback&&) noexcept;
+    void add_writer(int, Handle::ID, EventLoopCallback&&) noexcept;
+    void remove_reader(int) noexcept;
+    void remove_writer(int) noexcept;
 
-    struct Epoll::Event {
-        std::optional<EventLoopHandle> reader { std::nullopt };
-        std::optional<EventLoopHandle> writer { std::nullopt };
-        epoll_event event {};
-    };
-}
+    [[nodiscard]] inline int wait(epoll_event* events, int event_num, int timeout) noexcept {
+        return epoll_wait(_fd, events, event_num, timeout);
+    }
+};
+
+struct Epoll::Event {
+    std::optional<EventLoopHandle> reader { std::nullopt };
+    std::optional<EventLoopHandle> writer { std::nullopt };
+    epoll_event event {};
+};
+
+ASYNCIO_NS_END

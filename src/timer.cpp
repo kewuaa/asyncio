@@ -4,38 +4,40 @@
 #include "asyncio/timer.hpp"
 
 
-namespace kwa::asyncio {
-    using namespace types;
+ASYNCIO_NS_BEGIN()
 
-    size_t Timer::_canceled_count = 0;
+using namespace types;
 
-    Timer::Timer(TimePoint when, EventLoopCallback&& callback):
-        Handle(),
-        _when(when),
-        _callback(std::move(callback))
-    {
-    }
+size_t Timer::_canceled_count = 0;
 
-    Timer::Timer(Timer&& timer):
-        Handle(std::move(timer)),
-        _when(timer._when),
-        _callback(std::exchange(timer._callback, nullptr))
-    {
-        //
-    }
-
-    Timer& Timer::operator=(Timer&& timer) noexcept {
-        _when = timer._when;
-        _callback = std::exchange(timer._callback, nullptr);
-        return *this;
-    }
-
-    void Timer::cancel() noexcept {
-        _canceled_count++;
-        Handle::cancel();
-    }
-
-    void Timer::run() noexcept {
-        _callback();
-    }
+Timer::Timer(TimePoint when, EventLoopCallback&& callback):
+    Handle(),
+    _when(when),
+    _callback(std::move(callback))
+{
 }
+
+Timer::Timer(Timer&& timer):
+    Handle(std::move(timer)),
+    _when(timer._when),
+    _callback(std::exchange(timer._callback, nullptr))
+{
+    //
+}
+
+Timer& Timer::operator=(Timer&& timer) noexcept {
+    _when = timer._when;
+    _callback = std::exchange(timer._callback, nullptr);
+    return *this;
+}
+
+void Timer::cancel() noexcept {
+    _canceled_count++;
+    Handle::cancel();
+}
+
+void Timer::run() noexcept {
+    _callback();
+}
+
+ASYNCIO_NS_END

@@ -1,4 +1,5 @@
 #pragma once
+#include "asyncio_ns.hpp"
 #include "asyncio/event_loop.hpp"
 #include "asyncio/task.hpp"
 #include "asyncio/socket.hpp"
@@ -9,13 +10,15 @@
 #include "asyncio/types.hpp"
 
 
-namespace kwa::asyncio {
-    using namespace types;
+ASYNCIO_NS_BEGIN()
 
-    template<typename T>
-    requires concepts::Task<T>
-    auto run(T&& task) -> decltype(task.result()) {
-        auto& loop = EventLoop::get();
-        return loop.run_until_complete(std::forward<T>(task));
-    }
+using namespace types;
+
+template<typename T>
+requires concepts::Task<T>
+auto run(T&& task) -> decltype(task.result()) {
+    auto& loop = EventLoop::get();
+    return loop.run_until_complete(std::forward<T>(task));
 }
+
+ASYNCIO_NS_END

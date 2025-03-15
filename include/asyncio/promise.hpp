@@ -2,30 +2,33 @@
 #include <cassert>
 
 #include "concepts.hpp"
+#include "asyncio_ns.hpp"
 #include "asyncio_export.hpp"
 
 
-namespace kwa::asyncio {
-    class ASYNCIO_EXPORT BasePromise {
-        private:
-            mutable bool _canceled { false };
-            BasePromise* _parent { nullptr };
-        public:
-            virtual void resume() noexcept = 0;
+ASYNCIO_NS_BEGIN()
 
-            inline void set_parent(BasePromise* parent) noexcept {
-                assert(!_parent && "parent should be set once");
-                _parent = parent;
-            }
+class ASYNCIO_EXPORT BasePromise {
+private:
+    mutable bool _canceled { false };
+    BasePromise* _parent { nullptr };
+public:
+    virtual void resume() noexcept = 0;
 
-            inline void cancel() noexcept {
-                _canceled = true;
-            }
+    inline void set_parent(BasePromise* parent) noexcept {
+        assert(!_parent && "parent should be set once");
+        _parent = parent;
+    }
 
-            bool canceled() const noexcept;
+    inline void cancel() noexcept {
+        _canceled = true;
+    }
 
-            void try_resume_parent() const noexcept;
-    };
+    bool canceled() const noexcept;
 
-    static_assert(concepts::Cancelable<BasePromise>, "BasePromise not satisfy the Cancelable concept");
-}
+    void try_resume_parent() const noexcept;
+};
+
+static_assert(concepts::Cancelable<BasePromise>, "BasePromise not satisfy the Cancelable concept");
+
+ASYNCIO_NS_END
