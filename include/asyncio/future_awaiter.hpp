@@ -1,4 +1,5 @@
 #pragma once
+#include <cassert>
 #include <future>
 #include <fcntl.h>
 
@@ -6,7 +7,6 @@
 
 #include "asyncio_ns.hpp"
 #include "concepts.hpp"
-#include "promise.hpp"
 #include "event_loop.hpp"
 #include "epoll.hpp"
 
