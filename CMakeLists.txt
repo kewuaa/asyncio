@@ -1,34 +1,34 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 3.15)
+cmake_minimum_required(VERSION 3.15)
 
-PROJECT(
+project(
     asyncio
     LANGUAGES CXX
 )
 
-SET(CMAKE_CXX_STANDARD 23)
-SET(CMAKE_CXX_FLAGS_DEBUG "-Wall -g -ggdb -O0")
-SET(CMAKE_CXX_VISIBILITY_PRESET hidden)
-SET(CMAKE_VISIBILITY_INLINES_HIDDEN 1)
-SET(CMAKE_EXPORT_COMPILE_COMMANDS on)
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_FLAGS_DEBUG "-Wall -g -ggdb -O0")
+set(CMAKE_CXX_VISIBILITY_PRESET hidden)
+set(CMAKE_VISIBILITY_INLINES_HIDDEN 1)
+set(CMAKE_EXPORT_COMPILE_COMMANDS on)
 
-SET(BUILD_ECHO TRUE CACHE BOOL "if to build echo server")
-SET(BUILD_TESTS TRUE CACHE BOOL "if to build test")
+set(BUILD_ECHO TRUE CACHE BOOL "if to build echo server")
+set(BUILD_TESTS TRUE CACHE BOOL "if to build test")
 
-SET(ASYNCIO_MAX_EVENTS_NUM 100 CACHE STRING "max events number of asyncio")
-SET(ASYNCIO_MAX_SELECT_TIMEOUT "24 * 3600000" CACHE STRING "max timeout for select(milliseconds)")
-SET(ASYNCIO_THREAD_POOL_SIZE 4 CACHE STRING "thread pool size for asyncio")
+set(ASYNCIO_MAX_EVENTS_NUM 100 CACHE STRING "max events number of asyncio")
+set(ASYNCIO_MAX_SELECT_TIMEOUT "24 * 3600000" CACHE STRING "max timeout for select(milliseconds)")
+set(ASYNCIO_THREAD_POOL_SIZE 4 CACHE STRING "thread pool size for asyncio")
 
 if (NOT CMAKE_BUILD_TYPE)
-    SET(CMAKE_BUILD_TYPE Debug)
+    set(CMAKE_BUILD_TYPE Debug)
 endif()
 
 if (NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
-    SET(BUILD_ECHO FALSE)
-    SET(BUILD_TESTS FALSE)
+    set(BUILD_ECHO FALSE)
+    set(BUILD_TESTS FALSE)
 endif()
 
-INCLUDE(FetchContent)
-INCLUDE(GenerateExportHeader)
+include(FetchContent)
+include(GenerateExportHeader)
 
 FetchContent_Declare(
     tiny_thread_pool
@@ -37,25 +37,25 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(tiny_thread_pool)
 
-FIND_PACKAGE(spdlog REQUIRED)
+find_package(spdlog REQUIRED)
 
-ADD_LIBRARY(${PROJECT_NAME} SHARED)
+add_library(${PROJECT_NAME} SHARED)
 
 if (CMAKE_BUILD_TYPE STREQUAL Debug)
-    TARGET_COMPILE_OPTIONS(${PROJECT_NAME} PUBLIC "-D_DEBUG")
+    target_compile_options(${PROJECT_NAME} PUBLIC "-D_DEBUG")
 endif()
 
-CONFIGURE_FILE(
+configure_file(
     include/asyncio/config.hpp.in
     ${CMAKE_CURRENT_BINARY_DIR}/include/asyncio_config.hpp
 )
 
-GENERATE_EXPORT_HEADER(
+generate_export_header(
     ${PROJECT_NAME}
     EXPORT_FILE_NAME ${CMAKE_CURRENT_BINARY_DIR}/include/asyncio_export.hpp
 )
 
-TARGET_SOURCES(
+target_sources(
     ${PROJECT_NAME}
     PRIVATE
         src/event_loop.cpp
@@ -66,19 +66,19 @@ TARGET_SOURCES(
         src/coro_handle.cpp
         src/exception.cpp
 )
-TARGET_INCLUDE_DIRECTORIES(
+target_include_directories(
     ${PROJECT_NAME}
     PUBLIC
         include
         ${CMAKE_CURRENT_BINARY_DIR}/include
 )
-TARGET_LINK_LIBRARIES(${PROJECT_NAME} PUBLIC spdlog::spdlog)
-TARGET_LINK_LIBRARIES(${PROJECT_NAME} PUBLIC tiny_thread_pool)
+target_link_libraries(${PROJECT_NAME} PUBLIC spdlog::spdlog)
+target_link_libraries(${PROJECT_NAME} PUBLIC tiny_thread_pool)
 
 if (BUILD_ECHO)
-    ADD_EXECUTABLE(echo_server)
-    TARGET_SOURCES(echo_server PRIVATE echo.cpp)
-    TARGET_LINK_LIBRARIES(echo_server PRIVATE ${PROJECT_NAME})
+    add_executable(echo_server)
+    target_sources(echo_server PRIVATE echo.cpp)
+    target_link_libraries(echo_server PRIVATE ${PROJECT_NAME})
 endif()
 
 if (BUILD_TESTS)

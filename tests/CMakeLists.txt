@@ -1,4 +1,4 @@
-SET(
+set(
     tests
     test_task
     test_sleep
@@ -8,14 +8,14 @@ SET(
 foreach (
     test IN LISTS tests
 )
-    MESSAGE(STATUS "add test for ${test}")
-    ADD_EXECUTABLE(${test})
-    TARGET_SOURCES(${test} PRIVATE ${test}.cpp)
-    TARGET_LINK_LIBRARIES(
+    message(STATUS "add test for ${test}")
+    add_executable(${test})
+    target_sources(${test} PRIVATE ${test}.cpp)
+    target_link_libraries(
         ${test}
         PRIVATE
             Boost::ut
             ${PROJECT_NAME}
     )
-    ADD_TEST(NAME ${test} COMMAND $<TARGET_FILE:${test}>)
+    add_test(NAME ${test} COMMAND $<TARGET_FILE:${test}>)
 endforeach()
