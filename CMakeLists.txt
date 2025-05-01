@@ -14,7 +14,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS on)
 set(BUILD_ECHO TRUE CACHE BOOL "if to build echo server")
 set(BUILD_TESTS TRUE CACHE BOOL "if to build test")
 
-set(ASYNCIO_MAX_EVENTS_NUM 100 CACHE STRING "max events number of asyncio")
+set(ASYNCIO_MAX_EVENTS_NUM 1024 CACHE STRING "max events number of asyncio")
 set(ASYNCIO_MAX_SELECT_TIMEOUT "24 * 3600000" CACHE STRING "max timeout for select(milliseconds)")
 set(ASYNCIO_THREAD_POOL_SIZE 4 CACHE STRING "thread pool size for asyncio")
 
