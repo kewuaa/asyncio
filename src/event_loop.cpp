@@ -97,13 +97,16 @@ void EventLoop::_run_once() noexcept {
     }
 
     std::vector<Handle::ID> canceled {};
-    while (!_ready.empty() && !_stop) {
-        if (auto id = _ready.front().id; id == 0 || !Handle::canceled(id)) {
-            _ready.front().cb();
-        } else if (Handle::canceled(id)) {
-            canceled.push_back(id);
+    if (!_stop && !_ready.empty()) {
+        auto size = _ready.size();
+        for (size_t i = 0; !_stop && i < size; ++i) {
+            if (auto id = _ready.front().id; id == 0 || !Handle::canceled(id)) {
+                _ready.front().cb();
+            } else if (Handle::canceled(id)) {
+                canceled.push_back(id);
+            }
+            _ready.pop();
         }
-        _ready.pop();
     }
     for (auto id : canceled) {
         Handle::_canceled_handles.erase(id);
