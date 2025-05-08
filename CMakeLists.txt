@@ -27,15 +27,14 @@ if (NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     set(BUILD_TESTS FALSE)
 endif()
 
-include(FetchContent)
+include(cmake/CPM.cmake)
 include(GenerateExportHeader)
 
-FetchContent_Declare(
+CPMAddPackage(
     tiny_thread_pool
     GIT_REPOSITORY "https://github.com/kewuaa/tiny_thread_pool.git"
     GIT_TAG master
 )
-FetchContent_MakeAvailable(tiny_thread_pool)
 
 find_package(spdlog REQUIRED)
 
@@ -82,12 +81,11 @@ if (BUILD_ECHO)
 endif()
 
 if (BUILD_TESTS)
-    FetchContent_Declare(
-        ut
+    CPMAddPackage(
         GIT_REPOSITORY "https://github.com/boost-ext/ut.git"
-        GIT_TAG master
+        GIT_TAG v2.3.1
+        OPTIONS "BOOST_UT_DISABLE_MODULE ON"
     )
-    FetchContent_MakeAvailable(ut)
 
     ENABLE_TESTING()
     ADD_SUBDIRECTORY(tests)
