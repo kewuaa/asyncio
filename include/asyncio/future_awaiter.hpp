@@ -15,11 +15,6 @@ ASYNCIO_NS_BEGIN()
 
 template<typename R>
 class FutureAwaiter {
-private:
-    bool _done { false };
-    int _fd[2] { -1, -1 };
-    std::future<R> _fut { nullptr };
-    std::mutex _lock {};
 public:
     FutureAwaiter() = delete;
     FutureAwaiter(FutureAwaiter&) = delete;
@@ -29,8 +24,8 @@ public:
 
     template<typename F, typename... Args>
     requires requires(F f, Args... args) {
-    { f(args...) } -> std::same_as<R>;
-}
+        { f(args...) } -> std::same_as<R>;
+    }
     FutureAwaiter(
         TinyThreadPool& pool,
         F&& f,
@@ -41,7 +36,7 @@ public:
                 [this, f = std::forward<F>(f), ...args = std::forward<Args>(args)]() {
                     auto res = f(args...);
                     {
-                        std::lock_guard<std::mutex> lock { this->_lock };
+                        std::lock_guard<std::mutex> lock { this->_mtx };
                         this->_done = true;
                     }
                     if (this->_fd[1] != -1) {
@@ -70,7 +65,7 @@ public:
     template<typename P>
     requires concepts::Promise<P> || std::same_as<P, void>
     bool await_suspend(std::coroutine_handle<P> handle) noexcept {
-        std::lock_guard<std::mutex> lock { _lock };
+        std::lock_guard<std::mutex> lock { _mtx };
         if (_done) {
             return false;
         }
@@ -97,8 +92,12 @@ public:
             return _fut.get();
         }
     }
+private:
+    bool _done { false };
+    int _fd[2] { -1, -1 };
+    std::future<R> _fut { nullptr };
+    std::mutex _mtx {};
 };
-
 static_assert(concepts::Awaitable<FutureAwaiter<void>>, "Future<void> not satisfy the Awaitable concept");
 static_assert(concepts::Awaitable<FutureAwaiter<int>>, "Future<int> not satisfy the Awaitable concept");
 
