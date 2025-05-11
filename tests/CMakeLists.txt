@@ -4,6 +4,7 @@ set(
     test_sleep
     test_timer
     test_thread
+    test_locks
 )
 foreach (
     test IN LISTS tests
