@@ -125,6 +125,7 @@ Task<void, const char*> Socket::write(const char* buffer, size_t size) const noe
         buffer_size -= nbytes;
         pos += nbytes;
     }
+    co_return nullptr;
 }
 
 
