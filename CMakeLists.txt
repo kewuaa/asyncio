@@ -64,7 +64,6 @@ target_sources(
         src/handle.cpp
         src/coro_handle.cpp
         src/locks.cpp
-        src/exception.cpp
 )
 target_include_directories(
     ${PROJECT_NAME}

@@ -6,8 +6,7 @@
 #include "asyncio/timer.hpp"
 #include "asyncio/sleep.hpp"
 #include "asyncio/future_awaiter.hpp"
-#include <asyncio/locks.hpp>
-#include "asyncio/exception.hpp"
+#include "asyncio/locks.hpp"
 #include "asyncio/types.hpp"
 
 
