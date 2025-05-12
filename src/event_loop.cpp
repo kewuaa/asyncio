@@ -130,11 +130,6 @@ void EventLoop::call_soon(Handle& handle) noexcept {
     _ready.push({ handle.id(), [h = &handle] { h->run(); } });
 }
 
-void EventLoop::call_soon_threadsafe(EventLoopCallback&& callback) noexcept {
-    std::lock_guard<std::mutex> lock { _lock };
-    call_soon(std::move(callback));
-}
-
 std::shared_ptr<Timer> EventLoop::call_at(TimePoint when, EventLoopCallback&& callback) noexcept {
     auto timer = std::make_shared<Timer>(when, std::move(callback));
     _schedule.push_back(timer);
