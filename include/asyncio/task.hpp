@@ -237,7 +237,7 @@ struct Task<R>::Promise final: public PromiseResult<R>, public CoroHandle {
     }
 
     struct FinalAwaiter {
-        bool suspend;
+        const bool suspend;
         bool await_ready() noexcept { return !suspend; }
         template<typename P>
         requires concepts::Promise<P> || std::is_void_v<P>
