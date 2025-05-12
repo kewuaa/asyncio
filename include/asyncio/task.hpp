@@ -177,7 +177,6 @@ template<typename R, typename E>
 struct Task<R, E>::Promise final: public PromiseResult<R, E>, public CoroHandle {
     bool suspend_at_final { true };
     std::vector<Callback> done_callbacks {};
-    std::optional<Exception> exception { std::nullopt };
 
     void schedule_callback() noexcept {
         if (!done_callbacks.empty()) {
@@ -231,13 +230,6 @@ struct Task<R, E>::Promise final: public PromiseResult<R, E>, public CoroHandle 
 
     constexpr void unhandled_exception() noexcept {
         return;
-    }
-
-    template<typename E>
-    requires std::is_base_of_v<Exception, typename std::remove_reference_t<E>>
-    std::suspend_always yield_value(E&& e) noexcept {
-        set_exception(std::forward<E>(e));
-        return {};
     }
 };
 
