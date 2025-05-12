@@ -19,12 +19,10 @@ asyncio::Task<> response(int conn) {
 
 asyncio::Task<> start_server() noexcept {
     auto s = asyncio::Socket();
-    if (auto res = s.bind("127.0.0.1", 12345); !res) {
-        SPDLOG_ERROR(res.error().message());
+    if (auto res = s.bind("127.0.0.1", 12345); res == -1) {
         co_return;
     }
-    if (auto res = s.listen(10); !res) {
-        SPDLOG_ERROR(res.error().message());
+    if (auto res = s.listen(10); res == -1) {
         co_return;
     }
     while (true) {
@@ -36,8 +34,5 @@ asyncio::Task<> start_server() noexcept {
 
 
 int main() {
-    auto res = asyncio::run(start_server());
-    if (!res) {
-        SPDLOG_ERROR(res.error().message());
-    }
+    asyncio::run(start_server());
 }

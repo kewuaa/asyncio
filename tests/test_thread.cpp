@@ -14,7 +14,7 @@ int thread_task() {
 
 int main() {
     "thread"_test = [] {
-        auto res = asyncio::run(
+        asyncio::run(
             [] -> asyncio::Task<> {
                 auto& loop = asyncio::EventLoop::get();
                 std::vector<decltype(loop.run_in_thread(thread_task))> futs;

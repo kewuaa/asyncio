@@ -31,7 +31,7 @@ asyncio::Task<> coro3(asyncio::Condition& cond, int& v) {
 
 int main() {
     "lock"_test = [] {
-        auto res = asyncio::run(
+        asyncio::run(
             [] -> asyncio::Task<> {
                 asyncio::Mutex mtx;
                 int v = 0;
@@ -45,10 +45,9 @@ int main() {
                 }
             }()
         );
-        expect(res.has_value());
     };
     "event"_test = [] {
-        auto res = asyncio::run(
+        asyncio::run(
             [] -> asyncio::Task<> {
                 asyncio::Event<int> ev;
                 int v = 0;
@@ -62,10 +61,9 @@ int main() {
                 expect(v == 2);
             }()
         );
-        expect(res.has_value());
     };
     "condition"_test = [] {
-        auto res = asyncio::run(
+        asyncio::run(
             [] -> asyncio::Task<> {
                 asyncio::Condition cond;
                 int v = 10;
@@ -84,6 +82,5 @@ int main() {
                 expect(v == 0);
             }()
         );
-        expect(res.has_value());
     };
 }

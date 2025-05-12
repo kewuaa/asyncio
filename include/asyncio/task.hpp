@@ -1,5 +1,4 @@
 #pragma once
-#include <expected>
 #include <coroutine>
 #include <utility>
 
@@ -7,7 +6,6 @@
 
 #include "asyncio_ns.hpp"
 #include "event_loop.hpp"
-#include "exception.hpp"
 #include "concepts.hpp"
 #include "handle.hpp"
 #include "utils.hpp"
@@ -17,7 +15,7 @@ ASYNCIO_NS_BEGIN()
 
 using namespace types;
 
-template<typename R = void>
+template<typename R = void, typename E = void>
 class Task {
     friend EventLoop;
 private:
@@ -36,10 +34,15 @@ private:
     inline void _check_valid() const noexcept {
         exit_if(!valid(), "Invalid Task");
     }
+
+    inline void _check_result() const noexcept {
+        exit_if(canceled(), "task canceled");
+        exit_if(!_handle.promise().result_ready, "task result not ready");
+    }
 public:
-    using result_type =  Result<R>;
+    using result_type =  TaskResult<R, E>;
     using promise_type = Promise;
-    using Callback = std::function<void(const result_type&)>;
+    using Callback = TaskCallback<R, E>;
 
     Task() = delete;
     Task(Task&) = delete;
@@ -70,8 +73,7 @@ public:
         if (_handle) [[likely]] {
             return
             _handle.done()
-            || _handle.promise().canceled()
-            || _handle.promise().exception;
+            || _handle.promise().canceled();
         }
         return true;
     }
@@ -91,17 +93,20 @@ public:
     }
 
     inline result_type result() const & noexcept {
-        if (!valid()) {
-            return Error(InvalidTask());
+        _check_valid();
+        _check_result();
+        if constexpr (!std::is_same_v<result_type, void>) {
+            return _handle.promise().result;
         }
-        return _handle.promise().get_result();
     }
 
     inline result_type result() && noexcept {
-        if (!valid()) {
-            return Error(InvalidTask());
+        _check_valid();
+        _check_result();
+        auto handle = std::exchange(_handle, nullptr);
+        if constexpr (!std::is_same_v<result_type, void>) {
+            return std::exchange((&handle.promise())->result, {});
         }
-        return std::move(std::exchange(_handle, nullptr).promise()).get_result();
     }
 
     inline void cancel() const noexcept {
@@ -135,30 +140,41 @@ public:
 };
 
 
-template<typename R>
+template<typename R, typename E>
 struct PromiseResult {
-protected:
-    std::optional<R> result { std::nullopt };
 public:
+    TaskResult<R, E> result {};
+    bool result_ready { false };
+
     template<typename T>
-    requires std::is_same_v<R, typename std::remove_reference_t<T>>
     void return_value(T&& res) noexcept {
-        result = std::forward<T>(res);
+        if constexpr (std::is_same_v<std::decay_t<T>, R>) {
+            result = std::forward<T>(res);
+        } else if constexpr (std::is_same_v<std::decay_t<T>, E>) {
+            result = std::unexpected<E>(std::forward<T>(res));
+        } else if constexpr (std::is_same_v<std::decay_t<T>, std::nullptr_t>) {
+            static_assert(std::is_void_v<R>, "only nullptr counld be return with [R = void]");
+        } else {
+            static_assert(false, "unexpected type");
+        }
+        result_ready = true;
     }
 };
 
 
 template<>
-class PromiseResult<void> {
+class PromiseResult<void, void> {
 public:
+    bool result_ready { false };
+
     void return_void() noexcept {
-        //
+        result_ready = true;
     }
 };
 
 
-template<typename R>
-struct Task<R>::Promise final: public PromiseResult<R>, public CoroHandle {
+template<typename R, typename E>
+struct Task<R, E>::Promise final: public PromiseResult<R, E>, public CoroHandle {
     bool suspend_at_final { true };
     std::vector<Callback> done_callbacks {};
     std::optional<Exception> exception { std::nullopt };
@@ -167,58 +183,14 @@ struct Task<R>::Promise final: public PromiseResult<R>, public CoroHandle {
         if (!done_callbacks.empty()) {
             EventLoop::get().call_soon(
                 [this]() {
-                    auto res = this->get_result();
                     for (auto& cb : this->done_callbacks) {
-                        cb(res);
+                        if constexpr (std::same_as<result_type, void>) {
+                            cb();
+                        } else cb(this->result);
                     }
                 }
             );
         }
-    }
-
-    template<typename E>
-    requires std::is_base_of_v<Exception, typename std::remove_reference_t<E>>
-    void set_exception(E&& e) noexcept {
-        exception = std::forward<E>(e);
-        schedule_callback();
-        if (EventLoop::get().is_root(id())) {
-            EventLoop::get().stop();
-        } else {
-            try_resume_parent();
-        }
-    }
-
-    result_type get_result() && noexcept {
-        if (canceled()) {
-            exception = TaskCanceled();
-        }
-        auto e = std::exchange(exception, std::nullopt);
-        if (e) {
-            return Error(std::move(*e));
-        }
-        if constexpr (!std::is_void_v<R>) {
-            if (!this->result) {
-                return Error(TaskUnready());
-            }
-            return *std::exchange(this->result, std::nullopt);
-        }
-        return {};
-    }
-
-    result_type get_result() & noexcept {
-        if (canceled()) {
-            exception = TaskCanceled();
-        }
-        if (exception) {
-            return Error(*exception);
-        }
-        if constexpr (!std::is_void_v<R>) {
-            if (!this->result) {
-                return Error(TaskUnready());
-            }
-            return *this->result;
-        }
-        return {};
     }
 
     inline void run() noexcept override {
@@ -228,7 +200,7 @@ struct Task<R>::Promise final: public PromiseResult<R>, public CoroHandle {
     //////////////////////////////////////
     /// corounine related
     //////////////////////////////////////
-    Task<R> get_return_object() noexcept {
+    Task<R, E> get_return_object() noexcept {
         return { *this };
     }
 

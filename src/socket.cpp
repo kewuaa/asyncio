@@ -1,4 +1,3 @@
-#include <expected>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <cstring>
@@ -80,42 +79,22 @@ Socket& Socket::operator=(Socket&& s) noexcept {
     return *this;
 }
 
-Result<> Socket::bind(const char* host, short port) noexcept {
+int Socket::bind(const char* host, short port) noexcept {
     _host = host;
     _port = port;
     sockaddr_in addr { 0 };
     init_address(addr, host, port);
-    if (::bind(_fd, (sockaddr*)&addr, sizeof(addr)) == -1) {
-        return Error(Exception(
-            "socket fd {} failed to bind to {}:{}",
-            _fd, host, port
-        ));
-    }
-    SPDLOG_INFO("socket fd {} successfully bind to {}:{}", _fd, host, port);
-    return {};
+    return ::bind(_fd, (sockaddr*)&addr, sizeof(addr));
 }
 
-Result<> Socket::listen(int max_listen_num) const noexcept {
-    if (::listen(_fd, max_listen_num) == -1) {
-        return Error(Exception(
-            "socket fd {} listen failed", _fd
-        ));
-    }
-    SPDLOG_INFO("start listening");
-    return {};
+int Socket::listen(int max_listen_num) const noexcept {
+    return ::listen(_fd, max_listen_num);
 }
 
-Result<> Socket::connect(const char* host, short port) const noexcept {
+int Socket::connect(const char* host, short port) const noexcept {
     sockaddr_in addr { 0 };
     init_address(addr, host, port);
-    if (::connect(_fd, (sockaddr*)&addr, sizeof(addr)) == -1) {
-        return Error(Exception(
-            "socket fd {} failed to connect to {}:{}",
-            _fd, host, port
-        ));
-    }
-    SPDLOG_INFO("socket fd {} successfully connect to {}:{}", _fd, host, port);
-    return {};
+    return ::connect(_fd, (sockaddr*)&addr, sizeof(addr));
 }
 
 Socket::Accepter Socket::accept() const noexcept {
@@ -127,7 +106,7 @@ Socket::Reader Socket::read(char* buffer, size_t size) const noexcept {
     return { _fd, buffer, size };
 }
 
-Task<> Socket::write(const char* buffer, size_t size) const noexcept {
+Task<void, const char*> Socket::write(const char* buffer, size_t size) const noexcept {
     int buffer_size = size;
     int pos = 0;
     while (true) {
@@ -137,7 +116,7 @@ Task<> Socket::write(const char* buffer, size_t size) const noexcept {
             buffer_size
         );
         if (!res) {
-            co_yield res.error();
+            co_return res.error();
         }
         auto nbytes = *res;
         if (nbytes == buffer_size) {
@@ -177,18 +156,18 @@ void Socket::Reader::_read_once() noexcept {
     }
 }
 
-Result<int> Socket::Reader::await_resume() noexcept {
+TaskResult<int, const char*> Socket::Reader::await_resume() noexcept {
     if (_read_size > 0) {
         return _read_size;
     }
     if (_closed) {
-        return Error(ConnectionClosed());
+        return std::unexpected("connection closed");
     }
     auto& epoll = Epoll::get();
     epoll.remove_reader(_fd);
     _read_once();
     if (_closed) {
-        return Error(ConnectionClosed());
+        return std::unexpected("connection closed");
     }
     return _read_size;
 }
@@ -221,18 +200,18 @@ void Socket::Writer::_write_once() noexcept {
     }
 }
 
-Result<int> Socket::Writer::await_resume() noexcept {
+TaskResult<int, const char*> Socket::Writer::await_resume() noexcept {
     if (_write_size == _buffer_size) {
         return _write_size;
     }
     if (_closed) {
-        return Error(ConnectionClosed());
+        return std::unexpected("connection closed");
     }
     auto& epoll = Epoll::get();
     epoll.remove_writer(_fd);
     _write_once();
     if (_closed) {
-        return Error(ConnectionClosed());
+        return std::unexpected("connection closed");
     }
     return _write_size;
 }

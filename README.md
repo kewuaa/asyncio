@@ -38,10 +38,7 @@ asyncio::Task<> async_main() {
 
 
 int main() {
-    auto res = asyncio::run(async_main());
-    if (!res) {
-        throw std::runtime_error(res.error().message());
-    }
+    asyncio::run(async_main());
 }
 ```
 

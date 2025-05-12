@@ -14,7 +14,7 @@ int main() {
                 order++;
                 co_return;
             };
-            auto res = asyncio::run(
+            asyncio::run(
                 [&] -> asyncio::Task<> {
                     auto _ = task();
                     expect(order == 0); (order)++;
@@ -22,11 +22,10 @@ int main() {
                     expect(order == 2);
                 }()
             );
-            expect(res.has_value());
         };
 
         given("delay 1000") = [] {
-            auto res = asyncio::run(
+            asyncio::run(
                 [] -> asyncio::Task<> {
                     auto start = asyncio::types::Clock::now();
                     co_await asyncio::sleep<500>();
@@ -35,7 +34,6 @@ int main() {
                     expect(duration > 499 and duration < 501);
                 }()
             );
-            expect(res.has_value());
         };
     };
 }

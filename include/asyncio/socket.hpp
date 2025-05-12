@@ -1,7 +1,6 @@
 #pragma once
 #include <cstdio>
 #include <coroutine>
-#include <expected>
 
 #include "concepts.hpp"
 #include "epoll.hpp"
@@ -31,12 +30,12 @@ public:
     ~Socket();
     Socket& operator=(Socket& s) noexcept;
     Socket& operator=(Socket&& s) noexcept;
-    [[nodiscard]] Result<> bind(const char* host, short port) noexcept;
-    [[nodiscard]] Result<> listen(int max_listen_num) const noexcept;
-    [[nodiscard]] Result<> connect(const char* host, short port) const noexcept;
+    [[nodiscard]] int bind(const char* host, short port) noexcept;
+    [[nodiscard]] int listen(int max_listen_num) const noexcept;
+    [[nodiscard]] int connect(const char* host, short port) const noexcept;
     [[nodiscard]] Accepter accept() const noexcept;
     [[nodiscard]] Reader read(char* buffer, size_t size) const noexcept;
-    [[nodiscard]] Task<> write(const char* buffer, size_t size) const noexcept;
+    [[nodiscard]] Task<void, const char*> write(const char* buffer, size_t size) const noexcept;
     inline int fd() const noexcept { return _fd; };
 };
 
@@ -74,7 +73,7 @@ public:
         );
     }
 
-    Result<int> await_resume() noexcept;
+    TaskResult<int, const char*> await_resume() noexcept;
 
     // static_assert(concepts::Awaitable<Reader>, "Reader not satisfy the Awaitable concept");
 };
@@ -113,7 +112,7 @@ public:
         );
     }
 
-    Result<int> await_resume() noexcept;
+    TaskResult<int, const char*> await_resume() noexcept;
 
     // static_assert(concepts::Awaitable<Writer>, "Writer not satisfy the Awaitable concept");
 };

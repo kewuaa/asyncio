@@ -9,7 +9,7 @@ using namespace boost::ut::bdd;
 int main() noexcept {
     "timer"_test = [] {
         given("call later") = [] {
-            auto res = asyncio::run(
+            asyncio::run(
                 [] -> asyncio::Task<> {
                     auto& loop = asyncio::EventLoop::get();
                     auto now = asyncio::Clock::now();
@@ -21,11 +21,10 @@ int main() noexcept {
                     co_await asyncio::sleep<600>();
                 }()
             );
-            expect(res.has_value());
         };
 
         given("call at") = [] {
-            auto res = asyncio::run(
+            asyncio::run(
                 [] -> asyncio::Task<> {
                     auto& loop = asyncio::EventLoop::get();
                     auto now = asyncio::Clock::now();
@@ -37,7 +36,6 @@ int main() noexcept {
                     co_await asyncio::sleep<600>();
                 }()
             );
-            expect(res.has_value());
         };
     };
 }

@@ -25,50 +25,43 @@ int main() {
     "task"_test = [] {
         given("simple await") = [] {
             std::vector<int> result;
-            auto res = asyncio::run(coro_depth_n<0>(result));
-            expect(res.has_value());
+            asyncio::run(coro_depth_n<0>(result));
             expect(result == std::vector<int>{0});
         };
         given("nest await") = [] {
             std::vector<int> result;
-            auto res = asyncio::run(coro_depth_n<1>(result));
-            expect(res.has_value());
+            asyncio::run(coro_depth_n<1>(result));
             expect(result == std::vector<int>{1, 0, 10});
         };
         given("3 depth await") = [] {
             std::vector<int> result;
-            auto res = asyncio::run(coro_depth_n<2>(result));
-            expect(res.has_value());
+            asyncio::run(coro_depth_n<2>(result));
             expect(result == std::vector<int>{2, 1, 0, 10, 20});
         };
         given("4 depth await") = [] {
             std::vector<int> result;
-            auto res = asyncio::run(coro_depth_n<3>(result));
-            expect(res.has_value());
+            asyncio::run(coro_depth_n<3>(result));
             expect(result == std::vector<int>{ 3, 2, 1, 0, 10, 20, 30 });
         };
         given("5 depth await") = [] {
             std::vector<int> result;
-            auto res = asyncio::run(coro_depth_n<4>(result));
-            expect(res.has_value());
+            asyncio::run(coro_depth_n<4>(result));
             expect(result == std::vector<int>{4, 3, 2, 1, 0, 10, 20, 30, 40});
         };
     };
 
     "Task<>"_test = [] {
         bool called { false };
-        auto res = asyncio::run(
+        asyncio::run(
             [&] -> asyncio::Task<> {
                 auto t = square(5);
                 auto tt = std::move(t);
-                auto res = co_await t;
+                auto res = co_await tt;
                 expect(!t.valid());
                 expect(tt.valid());
-                expect(!res.has_value());
                 called = true;
             }()
         );
-        expect(res.has_value());
         expect(called) << "task not run successfully";
     };
 
@@ -76,16 +69,16 @@ int main() {
         given("square_sum 3, 4") = [] {
             auto square_sum = [](int x, int y) -> asyncio::Task<long> {
                 auto tx = square(x);
-                auto x2 = *(co_await tx);
-                auto y2 = *(co_await square(y));
+                auto x2 = co_await tx;
+                auto y2 = co_await square(y);
                 co_return x2 + y2;
             };
-            expect(*asyncio::run(square_sum(3, 4)) == 25);
+            expect(asyncio::run(square_sum(3, 4)) == 25);
         };
     };
 
     "Task cancel"_test = [] {
-        auto res = asyncio::run(
+        asyncio::run(
             [] -> asyncio::Task<> {
                 auto task = [] -> asyncio::Task<> {
                     co_await asyncio::sleep<500>();
@@ -93,11 +86,9 @@ int main() {
                 }();
                 task.cancel();
                 expect(task.canceled());
-                auto res = co_await task;
-                expect(!res.has_value());
+                // co_await task;
                 co_return;
             }()
         );
-        expect(res.has_value());
     };
 }
