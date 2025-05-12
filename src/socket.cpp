@@ -98,7 +98,9 @@ int Socket::connect(const char* host, short port) const noexcept {
 }
 
 Socket::Accepter Socket::accept() const noexcept {
-    exit_if(!_host, "socket fd {} not bind to any address yet", _fd);
+    if (!_host) {
+        utils::abort("socket fd {} not bind to any address yet", _fd);
+    }
     return { _fd, _host, _port };
 }
 

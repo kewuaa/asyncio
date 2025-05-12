@@ -40,7 +40,9 @@ Handle& Handle::operator=(Handle&& h) noexcept {
 }
 
 void Handle::cancel() noexcept {
-    exit_if(!_id, "try cancel invalid handle");
+    if (!_id) {
+        utils::abort("try cancel invalid handle");
+    }
     if (_canceled) {
         SPDLOG_WARN("handle {} already canceled, cancel repeatly", _id);
         return;

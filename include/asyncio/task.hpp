@@ -32,12 +32,16 @@ private:
     }
 
     inline void _check_valid() const noexcept {
-        exit_if(!valid(), "Invalid Task");
+        if (!valid()) utils::abort("Invalid Task");
     }
 
     inline void _check_result() const noexcept {
-        exit_if(canceled(), "task canceled");
-        exit_if(!_handle.promise().result_ready, "task result not ready");
+        if (canceled()) {
+            utils::abort("Task Canceled");
+        }
+        if (!_handle.promise().result_ready) {
+            utils::abort("Task result not ready");
+        }
     }
 public:
     using result_type =  TaskResult<R, E>;
