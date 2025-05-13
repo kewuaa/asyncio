@@ -18,6 +18,7 @@ static auto clock_resolution = std::chrono::milliseconds(
 static void signal_handle(int sig) noexcept {
     if (sig == SIGINT) {
         EventLoop::get().stop();
+        SPDLOG_WARN("receive SIGINT signal");
     }
 }
 
