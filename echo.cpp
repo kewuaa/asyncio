@@ -5,6 +5,7 @@ using namespace kwa;
 asyncio::Task<> response(int conn) {
     asyncio::Socket s { conn };
     constexpr auto SIZE = 1024;
+    char msg[] = "hello world";
     char buf[SIZE];
     while (true) {
         bzero(buf, SIZE);
@@ -13,6 +14,7 @@ asyncio::Task<> response(int conn) {
             break;
         }
         SPDLOG_INFO("recv from socket fd {}: {}", conn, buf);
+        co_await s.write(msg, sizeof(msg));
     }
 }
 
