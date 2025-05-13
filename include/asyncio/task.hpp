@@ -155,7 +155,7 @@ public:
 
     template<typename T>
     void return_value(T&& res) noexcept {
-        if constexpr (std::is_same_v<std::decay_t<T>, R>) {
+        if constexpr (std::is_same_v<std::decay_t<T>, decltype(result)> || std::is_same_v<std::decay_t<T>, R>) {
             result = std::forward<T>(res);
         } else if constexpr (std::is_same_v<std::decay_t<T>, E>) {
             result = std::unexpected<E>(std::forward<T>(res));
