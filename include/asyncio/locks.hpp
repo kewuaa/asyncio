@@ -118,7 +118,7 @@ public:
         EventLoop::get().call_soon(*std::exchange(_handle, nullptr));
     }
 
-    inline bool is_set() const noexcept { return _handle != nullptr; }
+    inline bool is_set() const noexcept { return _handle == nullptr; }
 private:
     Handle* _handle { nullptr };
 };
