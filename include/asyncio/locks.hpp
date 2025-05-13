@@ -60,7 +60,17 @@ static_assert(concepts::Awaitable<Lock>, "Lock is not awaitable");
 
 
 template<typename T>
-class Event {
+struct EventMessage {
+    using type = std::optional<T>;
+    type msg { std::nullopt };
+};
+template<>
+struct EventMessage<void> {
+    using type = void;
+};
+
+template<typename T = void>
+class Event: private EventMessage<T> {
     struct Awaiter {
         Event& ev;
         Awaiter(Awaiter&) = delete;
@@ -71,8 +81,10 @@ class Event {
 
         constexpr bool await_ready() const noexcept { return false; }
 
-        std::optional<T> await_resume() noexcept {
-            return std::exchange(ev._msg, std::nullopt);
+        EventMessage<T>::type await_resume() noexcept {
+            if constexpr (!std::is_void_v<T>) {
+                return std::exchange(ev.msg, std::nullopt);
+            }
         }
 
         template<typename P>
@@ -84,23 +96,30 @@ class Event {
     };
     static_assert(concepts::Awaitable<Awaiter>, "Awaiter not satisfy Awaitable concept");
 public:
+    Event() noexcept: EventMessage<T>() {}
+    Event(Event&) = delete;
+    Event(Event&&) = delete;
+    Event& operator=(Event&) = delete;
+    Event& operator=(Event&&) = delete;
+
     Awaiter wait() noexcept {
         return { *this };
     }
 
-    void set() noexcept {
+    template<typename... Message>
+    void set(Message&&... msg) noexcept {
         assert(_handle != nullptr);
+        if constexpr (!std::is_void_v<T>) {
+            static_assert(sizeof...(Message) < 2, "too much message");
+            if constexpr (sizeof...(Message) == 1) {
+                this->msg = std::make_optional(std::forward<Message>(msg)...);
+            }
+        } else static_assert(sizeof...(Message) == 0, "not support messsage");
         EventLoop::get().call_soon(*std::exchange(_handle, nullptr));
-    }
-
-    void set(T&& msg) noexcept {
-        _msg = std::make_optional(std::move(msg));
-        set();
     }
 
     inline bool is_set() const noexcept { return _handle != nullptr; }
 private:
-    std::optional<T> _msg { std::nullopt };
     Handle* _handle { nullptr };
 };
 
