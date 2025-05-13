@@ -30,7 +30,7 @@ void Lock::await_resume() noexcept {
 }
 
 
-Condition::Waiter::Waiter(Condition& cond) noexcept: cond(cond) {}
+Condition::Awaiter::Awaiter(Condition& cond) noexcept: cond(cond) {}
 
 Condition::Condition(Condition&& cond) noexcept:
     _wait_list(std::exchange(_wait_list, {})) {}
@@ -40,7 +40,7 @@ Condition& Condition::operator=(Condition&& cond) noexcept {
     return *this;
 }
 
-Condition::Waiter Condition::wait() noexcept {
+Condition::Awaiter Condition::wait() noexcept {
     return { *this };
 }
 

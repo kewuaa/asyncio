@@ -61,13 +61,13 @@ static_assert(concepts::Awaitable<Lock>, "Lock is not awaitable");
 
 template<typename T>
 class Event {
-    struct Waiter {
+    struct Awaiter {
         Event& ev;
-        Waiter(Waiter&) = delete;
-        Waiter(Waiter&&) = delete;
-        Waiter& operator=(Waiter&) = delete;
-        Waiter& operator=(Waiter&&) = delete;
-        Waiter(Event& ev) noexcept: ev(ev) {}
+        Awaiter(Awaiter&) = delete;
+        Awaiter(Awaiter&&) = delete;
+        Awaiter& operator=(Awaiter&) = delete;
+        Awaiter& operator=(Awaiter&&) = delete;
+        Awaiter(Event& ev) noexcept: ev(ev) {}
 
         constexpr bool await_ready() const noexcept { return false; }
 
@@ -82,9 +82,9 @@ class Event {
             ev._handle = &handle.promise();
         }
     };
-    static_assert(concepts::Awaitable<Waiter>, "Waiter is not awaitable");
+    static_assert(concepts::Awaitable<Awaiter>, "Awaiter not satisfy Awaitable concept");
 public:
-    Waiter wait() noexcept {
+    Awaiter wait() noexcept {
         return { *this };
     }
 
@@ -106,13 +106,13 @@ private:
 
 
 class ASYNCIO_EXPORT Condition {
-    struct Waiter {
+    struct Awaiter {
         Condition& cond;
-        Waiter(Condition&) noexcept;
-        Waiter(Waiter&) = delete;
-        Waiter(Waiter&&) = delete;
-        Waiter& operator=(Waiter&) = delete;
-        Waiter& operator=(Waiter&&) = delete;
+        Awaiter(Condition&) noexcept;
+        Awaiter(Awaiter&) = delete;
+        Awaiter(Awaiter&&) = delete;
+        Awaiter& operator=(Awaiter&) = delete;
+        Awaiter& operator=(Awaiter&&) = delete;
         constexpr bool await_ready() const noexcept { return false; }
         constexpr void await_resume() const noexcept {}
 
@@ -122,14 +122,14 @@ class ASYNCIO_EXPORT Condition {
             cond._wait_list.push(&handle.promise());
         }
     };
-    static_assert(concepts::Awaitable<Waiter>, "Waiter is not awaitable");
+    static_assert(concepts::Awaitable<Awaiter>, "AWaiter not satisify awaitable concept");
 public:
     Condition() noexcept = default;
     Condition(Condition&) = delete;
     Condition(Condition&&) noexcept;
     Condition& operator=(Condition&) = delete;
     Condition& operator=(Condition&&) noexcept;
-    Waiter wait() noexcept;
+    Awaiter wait() noexcept;
     void notify_one() noexcept;
     void notify_all() noexcept;
 private:
