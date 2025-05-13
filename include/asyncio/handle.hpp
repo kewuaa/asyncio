@@ -1,5 +1,6 @@
 #pragma once
 #include <unordered_set>
+#include <source_location>
 #include <cstdint>
 
 #include "types.hpp"
@@ -40,6 +41,8 @@ class ASYNCIO_EXPORT CoroHandle: public Handle {
 public:
     void set_parent(CoroHandle&) noexcept;
     void try_resume_parent() const noexcept;
+    void traceback(int depth) const noexcept;
+    virtual const std::source_location& get_loc() const noexcept = 0;
 private:
     CoroHandle* _parent { nullptr };
 };

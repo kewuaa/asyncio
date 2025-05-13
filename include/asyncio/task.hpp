@@ -37,9 +37,11 @@ private:
 
     inline void _check_result() const noexcept {
         if (canceled()) {
+            _handle.promise().traceback(0);
             utils::abort("Task Canceled");
         }
         if (!_handle.promise().result_ready) {
+            _handle.promise().traceback(0);
             utils::abort("Task result not ready");
         }
     }
@@ -73,8 +75,9 @@ public:
         }
     }
 
-    bool await_ready() const noexcept {
+    bool await_ready(std::source_location loc = std::source_location::current()) const noexcept {
         if (_handle) [[likely]] {
+            _handle.promise().loc = loc;
             return
             _handle.done()
             || _handle.promise().canceled();
@@ -181,6 +184,9 @@ template<typename R, typename E>
 struct Task<R, E>::Promise final: public PromiseResult<R, E>, public CoroHandle {
     bool suspend_at_final { true };
     std::vector<Callback> done_callbacks {};
+    std::source_location loc {};
+
+    Promise(std::source_location loc = std::source_location::current()): loc(loc) {}
 
     void schedule_callback() noexcept {
         if (!done_callbacks.empty()) {
@@ -198,6 +204,10 @@ struct Task<R, E>::Promise final: public PromiseResult<R, E>, public CoroHandle 
 
     inline void run() noexcept override {
         CorounineHandle::from_promise(*this).resume();
+    }
+
+    const std::source_location& get_loc() const noexcept override {
+        return loc;
     }
 
     //////////////////////////////////////

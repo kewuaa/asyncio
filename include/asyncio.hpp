@@ -7,6 +7,7 @@
 #include "asyncio/sleep.hpp"
 #include "asyncio/future_awaiter.hpp"
 #include "asyncio/locks.hpp"
+#include "asyncio/traceback.hpp"
 #include "asyncio/types.hpp"
 
 

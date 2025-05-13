@@ -1,5 +1,8 @@
+#include <spdlog/fmt/fmt.h>
+
 #include "asyncio/event_loop.hpp"
 #include "asyncio/handle.hpp"
+#include "asyncio/utils.hpp"
 
 
 ASYNCIO_NS_BEGIN()
@@ -28,6 +31,14 @@ void CoroHandle::try_resume_parent() const noexcept {
 
     if (!_parent->canceled()) {
         EventLoop::get().call_soon(*_parent);
+    }
+}
+
+void CoroHandle::traceback(int depth) const noexcept {
+    const auto& loc = get_loc();
+    utils::print_location(loc, depth);
+    if (_parent) {
+        _parent->traceback(depth+1);
     }
 }
 

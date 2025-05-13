@@ -1,7 +1,9 @@
 #pragma once
-#include "asyncio_ns.hpp"
+#include <source_location>
 
 #include <spdlog/spdlog.h>
+
+#include "asyncio_ns.hpp"
 
 
 ASYNCIO_NS_BEGIN(utils)
@@ -16,6 +18,20 @@ inline void abort(
         std::perror("error");
     }
     exit(EXIT_FAILURE);
+}
+
+
+inline void print_location(const std::source_location& loc, int depth) noexcept {
+    if (depth == 0) {
+        fmt::println("traceback below:");
+    }
+    fmt::println(
+        "[{}] {} at {}:{}",
+        depth,
+        loc.function_name(),
+        loc.file_name(),
+        loc.line()
+    );
 }
 
 ASYNCIO_NS_END
