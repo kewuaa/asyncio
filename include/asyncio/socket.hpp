@@ -17,6 +17,7 @@ private:
     class Reader;
     class Writer;
     class Accepter;
+    class Connecter;
 
     int _fd { -1 };
     bool _own_fd { false };
@@ -32,7 +33,7 @@ public:
     Socket& operator=(Socket&& s) noexcept;
     [[nodiscard]] int bind(const char* host, short port) noexcept;
     [[nodiscard]] int listen(int max_listen_num) const noexcept;
-    [[nodiscard]] int connect(const char* host, short port) const noexcept;
+    [[nodiscard]] Connecter connect(const char* host, short port) const noexcept;
     [[nodiscard]] Accepter accept() const noexcept;
     [[nodiscard]] Reader read(char* buffer, size_t size) const noexcept;
     [[nodiscard]] Task<void, const char*> write(const char* buffer, size_t size) const noexcept;
@@ -153,6 +154,41 @@ public:
     [[nodiscard]] int await_resume() noexcept;
 
     // static_assert(concepts::Awaitable<Accepter>, "Accepter not satisfy the Awaitable concept");
+};
+
+class Socket::Connecter {
+    friend Socket;
+private:
+    int _res { -1 };
+    int _fd { -1 };
+    Connecter(int fd, const char* host, short port);
+public:
+    Connecter() = delete;
+    Connecter(Connecter&) = delete;
+    Connecter(Connecter&&) = delete;
+    Connecter& operator=(Connecter&) = delete;
+    Connecter& operator=(Connecter&&) = delete;
+
+    inline bool await_ready() const noexcept {
+        return _res != -1 || errno != EINPROGRESS;
+    }
+
+    template<typename P>
+    requires concepts::Promise<P> || std::same_as<P, void>
+    void await_suspend(std::coroutine_handle<P> handle) const noexcept {
+        auto& epoll = Epoll::get();
+        epoll.add_writer(
+            _fd,
+            handle.promise().id(),
+            [h = &handle.promise()]() {
+                h->run();
+            }
+        );
+    }
+
+    [[nodiscard]] int await_resume() noexcept;
+
+    // static_assert(concepts::Awaitable<Connecter>, "Connecter not satisfy the Awaitable concept");
 };
 
 ASYNCIO_NS_END

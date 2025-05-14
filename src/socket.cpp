@@ -93,10 +93,8 @@ int Socket::listen(int max_listen_num) const noexcept {
     return ::listen(_fd, max_listen_num);
 }
 
-int Socket::connect(const char* host, short port) const noexcept {
-    sockaddr_in addr { 0 };
-    init_address(addr, host, port);
-    return ::connect(_fd, (sockaddr*)&addr, sizeof(addr));
+Socket::Connecter Socket::connect(const char* host, short port) const noexcept {
+    return { _fd, host, port };
 }
 
 Socket::Accepter Socket::accept() const noexcept {
@@ -246,6 +244,29 @@ int Socket::Accepter::await_resume() noexcept {
     epoll.remove_reader(_fd);
     _accept_once();
     return _conn;
+}
+
+////////////////////////////////////////////////////
+///ASocket::Connecter
+////////////////////////////////////////////////////
+Socket::Connecter::Connecter(int fd, const char* host, short port): _fd(fd) {
+    sockaddr_in addr { 0 };
+    init_address(addr, host, port);
+    _res = ::connect(fd, (sockaddr*)&addr, sizeof(addr));
+}
+
+int Socket::Connecter::await_resume() noexcept {
+    if (await_ready()) {
+        return _res;
+    }
+    auto& epoll = Epoll::get();
+    epoll.remove_writer(_fd);
+    socklen_t len = sizeof(errno);
+    if (getsockopt(_fd, SOL_SOCKET, SO_ERROR, &errno, &len) == -1 || errno != 0) {
+        return -1;
+    } else {
+        return 0;
+    }
 }
 
 ASYNCIO_NS_END
