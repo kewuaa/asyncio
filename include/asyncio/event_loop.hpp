@@ -38,7 +38,7 @@ public:
 
     template<typename T>
     requires concepts::Task<T>
-    [[nodiscard]] T::result_type run_until_complete(T&& task) noexcept {
+    [[nodiscard]] decltype(auto) run_until_complete(T&& task) noexcept {
         _root_id = task.id();
         run();
         return std::forward<T>(task).result();

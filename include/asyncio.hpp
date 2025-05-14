@@ -17,7 +17,7 @@ using namespace types;
 
 template<typename T>
 requires concepts::Task<T>
-auto run(T&& task) -> decltype(task.result()) {
+decltype(auto) run(T&& task) {
     auto& loop = EventLoop::get();
     return loop.run_until_complete(std::forward<T>(task));
 }
