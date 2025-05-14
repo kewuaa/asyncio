@@ -206,7 +206,7 @@ struct Task<R, E>::Promise final: public PromiseResult<R, E>, public CoroHandle 
         CorounineHandle::from_promise(*this).resume();
     }
 
-    const std::source_location& get_loc() const noexcept override {
+    inline const std::source_location& get_loc() const noexcept override {
         return loc;
     }
 
