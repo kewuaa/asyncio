@@ -73,7 +73,7 @@ public:
         );
     }
 
-    TaskResult<int, const char*> await_resume() noexcept;
+    [[nodiscard]] TaskResult<int, const char*> await_resume() noexcept;
 
     // static_assert(concepts::Awaitable<Reader>, "Reader not satisfy the Awaitable concept");
 };
@@ -112,7 +112,7 @@ public:
         );
     }
 
-    TaskResult<int, const char*> await_resume() noexcept;
+    [[nodiscard]] TaskResult<int, const char*> await_resume() noexcept;
 
     // static_assert(concepts::Awaitable<Writer>, "Writer not satisfy the Awaitable concept");
 };
