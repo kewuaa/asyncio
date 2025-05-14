@@ -52,9 +52,9 @@ int main() {
                 asyncio::Event<int> ev;
                 int v = 0;
                 auto task = coro2(ev, v);
-                expect(!ev.is_set());
-                co_await asyncio::sleep<0>();
                 expect(ev.is_set());
+                co_await asyncio::sleep<0>();
+                expect(!ev.is_set());
                 expect(v == 1);
                 ev.set(999);
                 co_await task;
