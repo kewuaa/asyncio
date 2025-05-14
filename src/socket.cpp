@@ -162,7 +162,7 @@ void Socket::Reader::_read_once() noexcept {
 }
 
 TaskResult<int, const char*> Socket::Reader::await_resume() noexcept {
-    if (_read_size > 0) {
+    if (await_ready()) {
         return _read_size;
     }
     if (_closed) {
@@ -206,7 +206,7 @@ void Socket::Writer::_write_once() noexcept {
 }
 
 TaskResult<int, const char*> Socket::Writer::await_resume() noexcept {
-    if (_write_size == _buffer_size) {
+    if (await_ready()) {
         return _write_size;
     }
     if (_closed) {
@@ -239,7 +239,7 @@ void Socket::Accepter::_accept_once() noexcept {
 }
 
 int Socket::Accepter::await_resume() noexcept {
-    if (_conn != -1) {
+    if (await_ready()) {
         return _conn;
     }
     auto& epoll = Epoll::get();
