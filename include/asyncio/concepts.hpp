@@ -27,7 +27,7 @@ concept Awaitable = requires(A awaiter) {
 
 
 template<typename T>
-concept Task = Cancelable<T> && Awaitable<T> && requires(T task) {
+concept Task = Cancelable<T> && requires(T task) {
     typename T::Callback;
     typename T::result_type;
     typename T::promise_type;
@@ -36,7 +36,9 @@ concept Task = Cancelable<T> && Awaitable<T> && requires(T task) {
     requires !std::copy_constructible<T>;
     { task.done() } -> std::same_as<bool>;
     { task.valid() } -> std::same_as<bool>;
-    { task.result() } -> std::same_as<typename T::result_type>;
+    requires
+        requires { { task.result() } -> std::same_as<typename T::result_type>; } ||
+        requires { { task.result() } -> std::same_as<typename T::result_type&>; };
     requires requires(typename T::Callback cb) {
         { task.add_done_callback(std::move(cb)) } -> std::same_as<void>;
     };

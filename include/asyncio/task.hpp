@@ -19,8 +19,8 @@ template<typename R = void, typename E = void>
 class Task {
     friend EventLoop;
 private:
-    struct Promise;
-    friend Promise;
+    struct BaseAwaiter;
+    struct Promise; friend Promise;
     using CorounineHandle = std::coroutine_handle<Promise>;
 
     CorounineHandle _handle { nullptr };
@@ -33,17 +33,6 @@ private:
 
     inline void _check_valid() const noexcept {
         if (!valid()) utils::abort("Invalid Task");
-    }
-
-    inline void _check_result() const noexcept {
-        if (canceled()) {
-            _handle.promise().traceback(0);
-            utils::abort("Task Canceled");
-        }
-        if (!_handle.promise().result_ready) {
-            _handle.promise().traceback(0);
-            utils::abort("Task result not ready");
-        }
     }
 public:
     using result_type =  TaskResult<R, E>;
@@ -75,45 +64,35 @@ public:
         }
     }
 
-    bool await_ready(std::source_location loc = std::source_location::current()) const noexcept {
-        if (_handle) [[likely]] {
-            _handle.promise().loc = loc;
-            return
-            _handle.done()
-            || _handle.promise().canceled();
-        }
-        return true;
+    auto operator co_await() const & noexcept {
+        struct Awaiter final: Task<R, E>::BaseAwaiter {
+            decltype(auto) await_resume() const noexcept {
+                return this->handle.promise().get_result();
+            }
+        };
+        static_assert(concepts::Awaitable<Awaiter>);
+        return Awaiter(_handle);
     }
 
-    template<typename P>
-    requires concepts::Promise<P> || std::same_as<P, void>
-    void await_suspend(std::coroutine_handle<P> handle) const noexcept {
-        _handle.promise().set_parent(handle.promise());
+    auto operator co_await() const && noexcept {
+        struct Awaiter final: Task<R, E>::BaseAwaiter {
+            auto await_resume() const noexcept {
+                return std::move(this->handle.promise()).get_result();
+            }
+        };
+        static_assert(concepts::Awaitable<Awaiter>);
+        return Awaiter(_handle);
     }
 
-    result_type await_resume() const & noexcept {
-        return result();
-    }
-
-    result_type await_resume() && noexcept {
-        return std::move(*this)->result();
-    }
-
-    inline result_type result() const & noexcept {
+    decltype(auto) result() & noexcept {
         _check_valid();
-        _check_result();
-        if constexpr (!std::is_same_v<result_type, void>) {
-            return _handle.promise().result;
-        }
+        return _handle.promise().get_result();
     }
 
-    inline result_type result() && noexcept {
+    auto result() && noexcept {
         _check_valid();
-        _check_result();
         auto handle = std::exchange(_handle, nullptr);
-        if constexpr (!std::is_same_v<result_type, void>) {
-            return std::exchange((&handle.promise())->result, {});
-        }
+        return std::move(handle.promise()).get_result();
     }
 
     inline void cancel() const noexcept {
@@ -143,6 +122,30 @@ public:
 
     inline bool valid() const noexcept {
         return _handle != nullptr;
+    }
+};
+
+
+template<typename R, typename E>
+struct Task<R, E>::BaseAwaiter {
+    CorounineHandle handle;
+
+    BaseAwaiter(const CorounineHandle& h) noexcept: handle(h) {}
+
+    bool await_ready(std::source_location loc = std::source_location::current()) const noexcept {
+        if (handle) [[likely]] {
+            handle.promise().loc = loc;
+            return
+                handle.done()
+                || handle.promise().canceled();
+        }
+        return true;
+    }
+
+    template<typename P>
+    requires concepts::Promise<P> || std::same_as<P, void>
+    void await_suspend(std::coroutine_handle<P> h) const noexcept {
+        handle.promise().set_parent(h.promise());
     }
 };
 
@@ -210,6 +213,31 @@ struct Task<R, E>::Promise final: public PromiseResult<R, E>, public CoroHandle 
         return loc;
     }
 
+    void check_result() noexcept {
+        if (canceled()) {
+            traceback(0);
+            utils::abort("Task Canceled");
+        }
+        if (!this->result_ready) {
+            traceback(0);
+            utils::abort("Task result not ready");
+        }
+    }
+
+    decltype(auto) get_result() & noexcept {
+        check_result();
+        if constexpr (!std::is_void_v<result_type>) {
+            return static_cast<result_type&>(this->result);
+        }
+    }
+
+    result_type get_result() && noexcept {
+        check_result();
+        if constexpr (!std::is_void_v<result_type>) {
+            return std::move(this->result);
+        }
+    }
+
     //////////////////////////////////////
     /// corounine related
     //////////////////////////////////////
@@ -247,9 +275,11 @@ struct Task<R, E>::Promise final: public PromiseResult<R, E>, public CoroHandle 
     }
 };
 
-static_assert(concepts::Task<Task<void>>, "Task<void> not satisfy the Task concept");
-static_assert(concepts::Task<Task<int>>, "Task<int> not satisfy the Task concept");
-static_assert(concepts::Promise<Task<void>::promise_type>, "Task<void>::promise_type not satisfy the Promise concept");
-static_assert(concepts::Promise<Task<int>::promise_type>, "Task<int>::promise_type not satisfy the Promise concept");
+static_assert(concepts::Task<Task<>>);
+static_assert(concepts::Task<Task<void, int>>);
+static_assert(concepts::Task<Task<int, int>>);
+static_assert(concepts::Promise<Task<>::promise_type>);
+static_assert(concepts::Promise<Task<void, int>::promise_type>);
+static_assert(concepts::Promise<Task<int, int>::promise_type>);
 
 ASYNCIO_NS_END
