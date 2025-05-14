@@ -22,7 +22,9 @@ static void init_address(sockaddr_in& addr, const char* host, short port) noexce
 
 static void nonblock_socket(int fd) noexcept {
     auto flag = fcntl(fd, F_GETFL, 0);
-    fcntl(fd, F_SETFL, flag | O_NONBLOCK);
+    if (fcntl(fd, F_SETFL, flag | O_NONBLOCK)) {
+        utils::abort("fcntl failed: {}", strerror(errno));
+    }
 }
 
 
