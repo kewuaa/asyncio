@@ -97,10 +97,22 @@ class Event: private EventMessage<T> {
     static_assert(concepts::Awaitable<Awaiter>, "Awaiter not satisfy Awaitable concept");
 public:
     Event() noexcept: EventMessage<T>() {}
+
     Event(Event&) = delete;
-    Event(Event&&) = delete;
+    Event(Event&& ev) noexcept: _handle(std::exchange(ev._handle, nullptr)) {
+        if constexpr (!std::is_void_v<T>) {
+            this->msg = std::exchange(ev.msg, std::nullopt);
+        }
+    }
+
     Event& operator=(Event&) = delete;
-    Event& operator=(Event&&) = delete;
+    Event& operator=(Event&& ev) noexcept {
+        _handle = std::exchange(ev._handle, nullptr);
+        if constexpr (!std::is_void_v<T>) {
+            this->msg = std::exchange(ev.msg, std::nullopt);
+        }
+        return *this;
+    }
 
     Awaiter wait() noexcept {
         return { *this };
