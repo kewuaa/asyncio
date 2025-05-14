@@ -10,6 +10,8 @@
 #include "asyncio/utils.hpp"
 
 
+ASYNCIO_NS_BEGIN()
+
 static void init_address(sockaddr_in& addr, const char* host, short port) noexcept {
     bzero(&addr, sizeof(addr));
     addr.sin_family = AF_INET;
@@ -23,8 +25,6 @@ static void nonblock_socket(int fd) noexcept {
     fcntl(fd, F_SETFL, flag | O_NONBLOCK);
 }
 
-
-ASYNCIO_NS_BEGIN()
 
 ////////////////////////////////////////////////////
 ///ASocket
