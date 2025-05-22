@@ -21,18 +21,18 @@ public:
     FutureAwaiter& operator=(FutureAwaiter&&) = delete;
 
     template<typename Pool, typename F, typename... Args>
-    requires requires(Pool pool, std::function<R(void)> f) {
-        { pool.submit(f) } -> std::same_as<std::future<R>>;
-    } && requires (F f, Args... args) {
-        { f(args...) } -> std::same_as<R>;
+    requires requires(Pool pool, std::function<R(void)>&& f) {
+        { pool.submit(std::move(f)) } -> std::same_as<std::future<R>>;
+    } && requires (F&& f, Args&&... args) {
+        { std::forward<F>(f)(std::forward<Args>(args)...) } -> std::same_as<R>;
     }
     FutureAwaiter(Pool& pool, F&& f, Args&&... args):
         _fut(
             pool.submit(
-                [this, &f, &args...]() {
-                    decltype(auto) res = std::forward<F>(f)(std::forward<Args>(args)...);
+                [this, handle = std::bind(std::forward<F>(f), std::forward<Args>(args)...)] -> R {
+                    decltype(auto) res = handle();
                     {
-                        std::lock_guard<std::mutex> lock { this->_mtx };
+                        std::lock_guard<std::mutex> lock { _mtx };
                         _done = true;
                     }
                     if (_fd[1] != -1) {

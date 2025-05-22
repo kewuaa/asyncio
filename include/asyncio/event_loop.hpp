@@ -42,9 +42,13 @@ public:
     }
 
     template<typename Pool, typename F, typename... Args>
-    [[nodiscard]] inline decltype(auto) run_in_thread(Pool& pool, F&& f, Args&&... args) noexcept {
-        using result_type = decltype(f(args...));
-        return std::make_shared<FutureAwaiter<result_type>>(pool, std::forward<F>(f), std::forward<Args>(args)...);
+    [[nodiscard]] inline auto run_in_thread(Pool& pool, F&& f, Args&&... args) noexcept {
+        using result_type = decltype(std::forward<F>(f)(std::forward<Args>(args)...));
+        return std::make_shared<FutureAwaiter<result_type>>(
+            pool,
+            std::forward<F>(f),
+            std::forward<Args>(args)...
+        );
     }
 private:
     bool _stop { false };
