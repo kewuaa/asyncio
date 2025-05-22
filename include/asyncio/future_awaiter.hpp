@@ -29,17 +29,29 @@ public:
     FutureAwaiter(Pool& pool, F&& f, Args&&... args):
         _fut(
             pool.submit(
-                [this, handle = std::bind(std::forward<F>(f), std::forward<Args>(args)...)] -> R {
-                    decltype(auto) res = handle();
-                    {
-                        std::lock_guard<std::mutex> lock { _mtx };
-                        _done = true;
+                [this, f = std::forward<F>(f), ...args = std::forward<Args>(args)] mutable -> R {
+                    if constexpr (std::is_void_v<R>) {
+                        std::forward<F>(f)(std::forward<Args>(args)...);
+                        {
+                            std::lock_guard<std::mutex> lock { _mtx };
+                            _done = true;
+                        }
+                        if (_fd[1] != -1) {
+                            char buf[1] = { 1 };
+                            write(_fd[1], buf, 1);
+                        }
+                    } else {
+                        R res = std::forward<F>(f)(std::forward<Args>(args)...);
+                        {
+                            std::lock_guard<std::mutex> lock { _mtx };
+                            _done = true;
+                        }
+                        if (_fd[1] != -1) {
+                            char buf[1] = { 1 };
+                            write(_fd[1], buf, 1);
+                        }
+                        return res;
                     }
-                    if (_fd[1] != -1) {
-                        char buf[1] = { 1 };
-                        write(_fd[1], buf, 1);
-                    }
-                    return res;
                 }
             )
         )
