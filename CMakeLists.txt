@@ -82,11 +82,6 @@ endif()
 
 if (BUILD_TESTS)
     CPMAddPackage(
-        GIT_REPOSITORY "https://github.com/boost-ext/ut.git"
-        GIT_TAG v2.3.1
-        OPTIONS "BOOST_UT_DISABLE_MODULE ON"
-    )
-
-    ENABLE_TESTING()
-    ADD_SUBDIRECTORY(tests)
+    enable_testing()
+    add_subdirectory(tests)
 endif()
