@@ -29,13 +29,13 @@ public:
     FutureAwaiter(Pool& pool, F&& f, Args&&... args):
         _fut(
             pool.submit(
-                [this, f = std::forward<F>(f), ...args = std::forward<Args>(args)]() {
-                    auto res = f(args...);
+                [this, &f, &args...]() {
+                    decltype(auto) res = std::forward<F>(f)(std::forward<Args>(args)...);
                     {
                         std::lock_guard<std::mutex> lock { this->_mtx };
-                        this->_done = true;
+                        _done = true;
                     }
-                    if (this->_fd[1] != -1) {
+                    if (_fd[1] != -1) {
                         char buf[1] = { 1 };
                         write(_fd[1], buf, 1);
                     }
