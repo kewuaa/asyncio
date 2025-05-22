@@ -16,7 +16,6 @@ set(BUILD_TESTS TRUE CACHE BOOL "if to build test")
 
 set(ASYNCIO_MAX_EVENTS_NUM 1024 CACHE STRING "max events number of asyncio")
 set(ASYNCIO_MAX_SELECT_TIMEOUT "24 * 3600000" CACHE STRING "max timeout for select(milliseconds)")
-set(ASYNCIO_THREAD_POOL_SIZE 4 CACHE STRING "thread pool size for asyncio")
 
 if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)
@@ -29,12 +28,6 @@ endif()
 
 include(cmake/CPM.cmake)
 include(GenerateExportHeader)
-
-CPMAddPackage(
-    tiny_thread_pool
-    GIT_REPOSITORY "https://github.com/kewuaa/tiny_thread_pool.git"
-    GIT_TAG master
-)
 
 find_package(spdlog REQUIRED)
 
@@ -81,7 +74,6 @@ if (BUILD_ECHO)
 endif()
 
 if (BUILD_TESTS)
-    CPMAddPackage(
     enable_testing()
     add_subdirectory(tests)
 endif()

@@ -2,14 +2,11 @@
 #include <queue>
 #include <chrono>
 
-#include "tiny_thread_pool.hpp"
-
 #include "handle.hpp"
 #include "concepts.hpp"
 #include "types.hpp"
 #include "timer.hpp"
 #include "asyncio_ns.hpp"
-#include "asyncio_config.hpp"
 #include "asyncio_export.hpp"
 
 
@@ -44,11 +41,10 @@ public:
         return std::forward<T>(task).result();
     }
 
-    template<typename F, typename... Args>
-    requires requires(F f, Args... args) { f(args...); }
-    [[nodiscard]] decltype(auto) run_in_thread(F&& f, Args&&... args) noexcept {
+    template<typename Pool, typename F, typename... Args>
+    [[nodiscard]] inline decltype(auto) run_in_thread(Pool& pool, F&& f, Args&&... args) noexcept {
         using result_type = decltype(f(args...));
-        return std::make_shared<FutureAwaiter<result_type>>(_get_pool(), std::forward<F>(f), std::forward<Args>(args)...);
+        return std::make_shared<FutureAwaiter<result_type>>(pool, std::forward<F>(f), std::forward<Args>(args)...);
     }
 private:
     bool _stop { false };
@@ -60,10 +56,6 @@ private:
     void _process_epoll(int timeout) noexcept;
     void _run_once() noexcept;
     void _cleanup() noexcept;
-    inline TinyThreadPool& _get_pool() const noexcept {
-        static TinyThreadPool pool { THREAD_POOL_SIZE };
-        return pool;
-    }
     static inline TimePoint _time() noexcept {
         return Clock::now();
     }

@@ -3,8 +3,6 @@
 #include <future>
 #include <fcntl.h>
 
-#include "tiny_thread_pool.hpp"
-
 #include "asyncio_ns.hpp"
 #include "concepts.hpp"
 #include "event_loop.hpp"
@@ -22,15 +20,13 @@ public:
     FutureAwaiter& operator=(FutureAwaiter&) = delete;
     FutureAwaiter& operator=(FutureAwaiter&&) = delete;
 
-    template<typename F, typename... Args>
-    requires requires(F f, Args... args) {
+    template<typename Pool, typename F, typename... Args>
+    requires requires(Pool pool, std::function<R(void)> f) {
+        { pool.submit(f) } -> std::same_as<std::future<R>>;
+    } && requires (F f, Args... args) {
         { f(args...) } -> std::same_as<R>;
     }
-    FutureAwaiter(
-        TinyThreadPool& pool,
-        F&& f,
-        Args&&... args
-    ):
+    FutureAwaiter(Pool& pool, F&& f, Args&&... args):
         _fut(
             pool.submit(
                 [this, f = std::forward<F>(f), ...args = std::forward<Args>(args)]() {
