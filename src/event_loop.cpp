@@ -2,6 +2,7 @@
 #define _MIN_CANCELLED_TIMER_HANDLES_FRACTION 0.5
 #include <algorithm>
 #include <csignal>
+#include <sys/eventfd.h>
 
 #include <spdlog/spdlog.h>
 
@@ -31,6 +32,17 @@ EventLoop::EventLoop() noexcept {
 EventLoop& EventLoop::get() noexcept {
     static EventLoop loop;
     return loop;
+}
+
+/// initialze eventfd for thread
+void EventLoop::_init_thread_eventfd() noexcept {
+    if (_eventfd == -1) {
+        _eventfd = eventfd(0, 0);
+        Epoll::get().add_reader(_eventfd, 0, [eventfd = _eventfd] {
+            eventfd_t value;
+            eventfd_read(eventfd, &value);
+        });
+    }
 }
 
 /// process events of epoll
@@ -118,6 +130,9 @@ void EventLoop::_run_once() noexcept {
 void EventLoop::_cleanup() noexcept {
     _stop = false;
     _root_id = 0;
+    if (auto eventfd = std::exchange(_eventfd, -1); eventfd != -1) {
+        close(eventfd);
+    }
     while (!_ready.empty()) {
         _ready.pop();
     }

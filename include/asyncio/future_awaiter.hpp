@@ -2,11 +2,11 @@
 #include <cassert>
 #include <future>
 #include <fcntl.h>
+#include <sys/eventfd.h>
 
 #include "asyncio_ns.hpp"
 #include "concepts.hpp"
 #include "event_loop.hpp"
-#include "epoll.hpp"
 
 
 ASYNCIO_NS_BEGIN()
@@ -26,30 +26,16 @@ public:
     } && requires (F&& f, Args&&... args) {
         { std::forward<F>(f)(std::forward<Args>(args)...) } -> std::same_as<R>;
     }
-    FutureAwaiter(Pool& pool, F&& f, Args&&... args):
+    FutureAwaiter(int eventfd, Pool& pool, F&& f, Args&&... args):
         _fut(
             pool.submit(
-                [this, f = std::forward<F>(f), ...args = std::forward<Args>(args)] mutable -> R {
+                [this, eventfd, f = std::forward<F>(f), ...args = std::forward<Args>(args)] mutable -> R {
                     if constexpr (std::is_void_v<R>) {
                         std::forward<F>(f)(std::forward<Args>(args)...);
-                        {
-                            std::lock_guard<std::mutex> lock { _mtx };
-                            _done = true;
-                        }
-                        if (_fd[1] != -1) {
-                            char buf[1] = { 1 };
-                            write(_fd[1], buf, 1);
-                        }
+                        _done_callback(eventfd);
                     } else {
                         R res = std::forward<F>(f)(std::forward<Args>(args)...);
-                        {
-                            std::lock_guard<std::mutex> lock { _mtx };
-                            _done = true;
-                        }
-                        if (_fd[1] != -1) {
-                            char buf[1] = { 1 };
-                            write(_fd[1], buf, 1);
-                        }
+                        _done_callback(eventfd);
                         return res;
                     }
                 }
@@ -59,52 +45,43 @@ public:
         //
     }
 
-    ~FutureAwaiter() {
-        if (_fd[0] != -1) {
-            close(_fd[0]);
-            close(_fd[1]);
-        }
-    }
-
     inline bool await_ready() noexcept {
-        return _done;
+        return _status.load() != 0;
     }
 
     template<typename P>
     requires concepts::Promise<P> || std::same_as<P, void>
     bool await_suspend(std::coroutine_handle<P> handle) noexcept {
-        std::lock_guard<std::mutex> lock { _mtx };
-        if (_done) {
-            return false;
-        }
-        pipe2(_fd, O_NONBLOCK);
-        Epoll::get().add_reader(
-            _fd[0],
-            handle.promise().id(),
-            [h = &handle.promise()]() {
-                h->run();
+        uint64_t status;
+        do {
+            status = _status.load();
+            if (status != 0) {
+                return false;
             }
-        );
+        } while (!_status.compare_exchange_weak(status, (uint64_t)&handle.promise()));
         return true;
     }
 
     inline decltype(auto) await_resume() noexcept {
-#if _DEBUG
-        if (_fd[0] != -1) {
-            char flag;
-            read(_fd[0], &flag, 1);
-            assert(flag == 1 && "flag == 1");
-        }
-#endif
         if constexpr (!std::is_same_v<R, void>) {
             return _fut.get();
         }
     }
 private:
-    bool _done { false };
-    int _fd[2] { -1, -1 };
     std::future<R> _fut { nullptr };
-    std::mutex _mtx {};
+    std::atomic<uint64_t> _status { 0 };
+
+    void _done_callback(int eventfd) noexcept {
+        uint64_t status;
+        do {
+            status = _status.load();
+            if (status != 0) {
+                EventLoop::get().call_soon_threadsafe(*(Handle*)status);
+                eventfd_write(eventfd, 1);
+                return;
+            }
+        } while (!_status.compare_exchange_weak(status, 1));
+    }
 };
 static_assert(concepts::Awaitable<FutureAwaiter<void>>, "Future<void> not satisfy the Awaitable concept");
 static_assert(concepts::Awaitable<FutureAwaiter<int>>, "Future<int> not satisfy the Awaitable concept");

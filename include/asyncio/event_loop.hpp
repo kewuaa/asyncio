@@ -1,6 +1,7 @@
 #pragma once
 #include <queue>
 #include <chrono>
+#include <mutex>
 
 #include "handle.hpp"
 #include "concepts.hpp"
@@ -46,7 +47,9 @@ public:
     template<typename Pool, typename F, typename... Args>
     [[nodiscard]] inline auto run_in_thread(Pool& pool, F&& f, Args&&... args) noexcept {
         using result_type = decltype(std::forward<F>(f)(std::forward<Args>(args)...));
+        _init_thread_eventfd();
         return std::make_shared<FutureAwaiter<result_type>>(
+            _eventfd,
             pool,
             std::forward<F>(f),
             std::forward<Args>(args)...
@@ -55,11 +58,13 @@ public:
 private:
     bool _stop { false };
     std::mutex _mtx {};
+    int _eventfd { -1 };
     Handle::ID _root_id { 0 };
     std::vector<std::shared_ptr<Timer>> _schedule {};
     std::queue<EventLoopHandle> _ready {};
 
     EventLoop() noexcept;
+    void _init_thread_eventfd() noexcept;
     void _process_epoll(int timeout) noexcept;
     void _run_once() noexcept;
     void _cleanup() noexcept;
