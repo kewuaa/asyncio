@@ -19,9 +19,9 @@ int main() {
         asyncio::run(
             [&pool] -> asyncio::Task<> {
                 auto& loop = asyncio::EventLoop::get();
-                std::vector<decltype(loop.run_in_thread(pool, thread_task))> futs;
+                std::vector<decltype(loop.run_in_thread(pool, &thread_task))> futs;
                 for (int i = 0; i < 3; i++) {
-                    futs.push_back(loop.run_in_thread(pool, thread_task));
+                    futs.push_back(loop.run_in_thread(pool, &thread_task));
                 }
                 co_await asyncio::sleep<500>();
                 for (auto fut : futs) {
