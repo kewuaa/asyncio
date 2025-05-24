@@ -8,8 +8,12 @@
 
 ASYNCIO_NS_BEGIN()
 
-Epoll::Epoll(): _fd(epoll_create1(0)) {
-    SPDLOG_INFO("successfully create epoll fd {}", _fd);
+int Epoll::fd() noexcept {
+    if (_fd == -1) {
+        _fd = epoll_create1(0);
+        SPDLOG_INFO("successfully create epoll fd {}", _fd);
+    }
+    return _fd;
 }
 
 Epoll::~Epoll() {
@@ -41,7 +45,7 @@ void Epoll::add_reader(int fd, Handle::ID id, EventLoopCallback&& cb) noexcept {
         utils::abort("repeatly add reader for fd {}", fd);
     }
     event->reader = { id, std::move(cb) };
-    if (epoll_ctl(_fd, op, fd, &event->event) == -1) {
+    if (epoll_ctl(this->fd(), op, fd, &event->event) == -1) {
         utils::abort("failed to add reader for fd {}", fd);
     }
     SPDLOG_DEBUG("successfully add reader for fd {}", fd);
@@ -64,7 +68,7 @@ void Epoll::add_writer(int fd, Handle::ID id, EventLoopCallback&& cb) noexcept {
         utils::abort("repeatly add writer for fd {}", fd);
     }
     event->writer = { id, std::move(cb) };
-    if (epoll_ctl(_fd, op, fd, &event->event) == -1) {
+    if (epoll_ctl(this->fd(), op, fd, &event->event) == -1) {
         utils::abort("failed to add writer for fd {}", fd);
     }
     SPDLOG_DEBUG("successfully add writer for fd {}", fd);
@@ -80,12 +84,12 @@ void Epoll::remove_reader(int fd) noexcept {
     _map[fd].reader = std::nullopt;
     _map[fd].event.events &= ~EPOLLIN;
     if (_map[fd].writer) {
-        if (epoll_ctl(_fd, EPOLL_CTL_MOD, fd, &_map[fd].event) == -1) {
+        if (epoll_ctl(this->fd(), EPOLL_CTL_MOD, fd, &_map[fd].event) == -1) {
             utils::abort("failed to ctl fd {}", fd);
         }
     } else {
         _map.erase(fd);
-        if (epoll_ctl(_fd, EPOLL_CTL_DEL, fd, nullptr) == -1) {
+        if (epoll_ctl(this->fd(), EPOLL_CTL_DEL, fd, nullptr) == -1) {
             utils::abort("failed to remove reader for fd {}", fd);
         }
     }
@@ -102,12 +106,12 @@ void Epoll::remove_writer(int fd) noexcept {
     _map[fd].writer = std::nullopt;
     _map[fd].event.events &= ~EPOLLOUT;
     if (_map[fd].reader) {
-        if (epoll_ctl(_fd, EPOLL_CTL_MOD, fd, &_map[fd].event) == -1) {
+        if (epoll_ctl(this->fd(), EPOLL_CTL_MOD, fd, &_map[fd].event) == -1) {
             utils::abort("failed to ctl fd {}", fd);
         }
     } else {
         _map.erase(fd);
-        if (epoll_ctl(_fd, EPOLL_CTL_DEL, fd, nullptr) == -1) {
+        if (epoll_ctl(this->fd(), EPOLL_CTL_DEL, fd, nullptr) == -1) {
             utils::abort("failed to remove writer for fd {}", fd);
         }
     }

@@ -19,7 +19,8 @@ private:
     int _fd { -1 };
     std::unordered_map<int, Event> _map;
 
-    Epoll();
+    Epoll() noexcept = default;
+    int fd() noexcept;
 public:
     [[nodiscard]] static Epoll& get() noexcept;
     Epoll(Epoll&) = delete;
