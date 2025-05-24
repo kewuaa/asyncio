@@ -37,7 +37,7 @@ EventLoop& EventLoop::get() noexcept {
 /// initialze eventfd for thread
 void EventLoop::_init_thread_eventfd() noexcept {
     if (_eventfd == -1) {
-        _eventfd = eventfd(0, 0);
+        _eventfd = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
         Epoll::get().add_reader(_eventfd, 0, [eventfd = _eventfd] {
             eventfd_t value;
             eventfd_read(eventfd, &value);
