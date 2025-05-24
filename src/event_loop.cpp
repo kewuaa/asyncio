@@ -122,6 +122,7 @@ void EventLoop::_cleanup() noexcept {
         _ready.pop();
     }
     Handle::_canceled_handles.clear();
+    Epoll::get().clear();
 }
 
 void EventLoop::call_soon(EventLoopCallback&& callback) noexcept {
