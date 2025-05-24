@@ -27,7 +27,8 @@ public:
     Epoll(Epoll&&) = delete;
     Epoll& operator=(Epoll&) = delete;
     Epoll& operator=(Epoll&&) = delete;
-    ~Epoll();
+    ~Epoll() noexcept;
+    void clear() noexcept;
     void add_reader(int, Handle::ID, EventLoopCallback&&) noexcept;
     void add_writer(int, Handle::ID, EventLoopCallback&&) noexcept;
     void remove_reader(int) noexcept;

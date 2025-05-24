@@ -16,11 +16,16 @@ int Epoll::fd() noexcept {
     return _fd;
 }
 
-Epoll::~Epoll() {
+Epoll::~Epoll() noexcept {
+    clear();
+}
+
+void Epoll::clear() noexcept {
     if (auto fd = std::exchange(_fd, -1); fd != -1) {
         close(fd);
         SPDLOG_INFO("close epoll fd {}", fd);
     }
+    _map.clear();
 }
 
 Epoll& Epoll::get() noexcept {
