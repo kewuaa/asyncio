@@ -26,6 +26,8 @@ public:
     EventLoop& operator=(EventLoop&&) = delete;
     void call_soon(EventLoopCallback&& callback) noexcept;
     void call_soon(Handle& handle) noexcept;
+    void call_soon_threadsafe(EventLoopCallback&& callback) noexcept;
+    void call_soon_threadsafe(Handle& handle) noexcept;
     std::shared_ptr<Timer> call_at(TimePoint when, EventLoopCallback&& callback) noexcept;
     std::shared_ptr<Timer> call_later(std::chrono::milliseconds delay, EventLoopCallback&& callback) noexcept;
     void stop() noexcept;
@@ -52,6 +54,7 @@ public:
     }
 private:
     bool _stop { false };
+    std::mutex _mtx {};
     Handle::ID _root_id { 0 };
     std::vector<std::shared_ptr<Timer>> _schedule {};
     std::queue<EventLoopHandle> _ready {};

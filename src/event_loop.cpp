@@ -132,6 +132,16 @@ void EventLoop::call_soon(Handle& handle) noexcept {
     _ready.push({ handle.id(), [h = &handle] { h->run(); } });
 }
 
+void EventLoop::call_soon_threadsafe(EventLoopCallback&& callback) noexcept {
+    std::lock_guard<std::mutex> lock { _mtx };
+    _ready.push({ 0, std::move(callback) });
+}
+
+void EventLoop::call_soon_threadsafe(Handle& handle) noexcept {
+    std::lock_guard<std::mutex> lock { _mtx };
+    _ready.push({ handle.id(), [h = &handle] { h->run(); } });
+}
+
 std::shared_ptr<Timer> EventLoop::call_at(TimePoint when, EventLoopCallback&& callback) noexcept {
     auto timer = std::make_shared<Timer>(when, std::move(callback));
     _schedule.push_back(timer);
