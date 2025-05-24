@@ -13,9 +13,9 @@ Epoll::Epoll(): _fd(epoll_create1(0)) {
 }
 
 Epoll::~Epoll() {
-    if (_fd != -1) {
-        close(_fd);
-        SPDLOG_INFO("close epoll fd {}", _fd);
+    if (auto fd = std::exchange(_fd, -1); fd != -1) {
+        close(fd);
+        SPDLOG_INFO("close epoll fd {}", fd);
     }
 }
 
