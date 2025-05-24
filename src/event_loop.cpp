@@ -38,6 +38,7 @@ EventLoop& EventLoop::get() noexcept {
 void EventLoop::_init_thread_eventfd() noexcept {
     if (_eventfd == -1) {
         _eventfd = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
+        SPDLOG_INFO("successfully create eventfd {}", _eventfd);
         Epoll::get().add_reader(_eventfd, 0, [eventfd = _eventfd] {
             eventfd_t value;
             eventfd_read(eventfd, &value);
@@ -132,6 +133,7 @@ void EventLoop::_cleanup() noexcept {
     _root_id = 0;
     if (auto eventfd = std::exchange(_eventfd, -1); eventfd != -1) {
         close(eventfd);
+        SPDLOG_INFO("close eventfd {}", eventfd);
     }
     while (!_ready.empty()) {
         _ready.pop();
