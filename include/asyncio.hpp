@@ -16,7 +16,7 @@ ASYNCIO_NS_BEGIN()
 using namespace types;
 
 template<typename T>
-requires concepts::Task<T>
+requires concepts::Task<std::decay_t<T>>
 decltype(auto) run(T&& task) {
     auto& loop = EventLoop::get();
     return loop.run_until_complete(std::forward<T>(task));

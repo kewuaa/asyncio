@@ -37,7 +37,7 @@ public:
     inline bool is_root(Handle::ID id) const noexcept { return _root_id == id; }
 
     template<typename T>
-    requires concepts::Task<T>
+    requires concepts::Task<std::decay_t<T>>
     [[nodiscard]] decltype(auto) run_until_complete(T&& task) noexcept {
         _root_id = task.id();
         run();
