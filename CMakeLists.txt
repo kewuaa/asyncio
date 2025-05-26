@@ -65,7 +65,6 @@ target_include_directories(
         ${CMAKE_CURRENT_BINARY_DIR}/include
 )
 target_link_libraries(${PROJECT_NAME} PUBLIC spdlog::spdlog)
-target_link_libraries(${PROJECT_NAME} PUBLIC tiny_thread_pool)
 
 if (BUILD_ECHO)
     add_executable(echo_server)
