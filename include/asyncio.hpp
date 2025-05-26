@@ -22,4 +22,35 @@ inline decltype(auto) run(T&& task) {
     return loop.run_until_complete(std::forward<T>(task));
 }
 
+
+template<typename T>
+requires concepts::Task<std::decay_t<T>>
+asyncio::Task<bool> wait_for(T&& task, std::chrono::milliseconds timeout) {
+    if (task.done()) {
+        co_return false;
+    }
+    auto& loop = EventLoop::get();
+    Event<bool> ev;
+    if constexpr (std::is_void_v<typename std::decay_t<T>::result_type>) {
+        task.add_done_callback([&ev] {
+            if (!ev.is_set()) {
+                ev.set(false);
+            }
+        });
+    } else {
+        task.add_done_callback([&ev](const auto& _) {
+            if (!ev.is_set()) {
+                ev.set(false);
+            }
+        });
+    }
+    loop.call_later(timeout, [&ev, &task] {
+        task.cancel();
+        if (!ev.is_set()) {
+            ev.set(true);
+        }
+    });
+    co_return *(co_await ev.wait());
+}
+
 ASYNCIO_NS_END
