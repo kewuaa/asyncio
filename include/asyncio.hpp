@@ -29,27 +29,29 @@ asyncio::Task<bool> wait_for(T&& task, std::chrono::milliseconds timeout) {
     if (task.done()) {
         co_return false;
     }
-    auto& loop = EventLoop::get();
     Event<bool> ev;
-    if constexpr (std::is_void_v<typename std::decay_t<T>::result_type>) {
-        task.add_done_callback([&ev] {
-            if (!ev.is_set()) {
-                ev.set(false);
-            }
-        });
-    } else {
-        task.add_done_callback([&ev](const auto& _) {
-            if (!ev.is_set()) {
-                ev.set(false);
-            }
-        });
-    }
-    loop.call_later(timeout, [&ev, &task] {
+    auto& loop = EventLoop::get();
+    auto timer = loop.call_later(timeout, [&ev, &task] {
         task.cancel();
         if (!ev.is_set()) {
             ev.set(true);
         }
     });
+    if constexpr (std::is_void_v<typename std::decay_t<T>::result_type>) {
+        task.add_done_callback([timer, &ev] {
+            timer->cancel();
+            if (!ev.is_set()) {
+                ev.set(false);
+            }
+        });
+    } else {
+        task.add_done_callback([timer, &ev](const auto& _) {
+            timer->cancel();
+            if (!ev.is_set()) {
+                ev.set(false);
+            }
+        });
+    }
     co_return *(co_await ev.wait());
 }
 
