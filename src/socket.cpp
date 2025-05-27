@@ -60,6 +60,7 @@ Socket::Socket(Socket&& s):
 
 Socket::~Socket() {
     if (_own_fd && _fd != -1) {
+        Epoll::get().clear_fd(_fd);
         close(_fd);
         SPDLOG_INFO("close socket fd {}", _fd);
     }

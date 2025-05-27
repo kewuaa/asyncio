@@ -33,6 +33,7 @@ public:
     void add_writer(int, Handle::ID, EventLoopCallback&&) noexcept;
     void remove_reader(int) noexcept;
     void remove_writer(int) noexcept;
+    void clear_fd(int) noexcept;
 
     [[nodiscard]] inline int wait(epoll_event* events, int event_num, int timeout) noexcept {
         return epoll_wait(_fd, events, event_num, timeout);

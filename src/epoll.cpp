@@ -123,4 +123,13 @@ void Epoll::remove_writer(int fd) noexcept {
     SPDLOG_DEBUG("successfully remove writer for fd {}", fd);
 }
 
+void Epoll::clear_fd(int fd) noexcept {
+    if (_map.find(fd) != _map.end()) {
+        _map.erase(fd);
+        if (epoll_ctl(this->fd(), EPOLL_CTL_DEL, fd, nullptr) == -1) {
+            utils::abort("failed to clear fd {}", fd);
+        }
+    }
+}
+
 ASYNCIO_NS_END
