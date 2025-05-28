@@ -36,15 +36,15 @@ Epoll& Epoll::get() noexcept {
 void Epoll::add_reader(int fd, Handle::ID id, EventLoopCallback&& cb) noexcept {
     Event* event;
     int op;
-    if (_map.find(fd) == _map.end()) {
+    if (_map.contains(fd)) {
+        event = &_map[fd];
+        event->event.events |= EPOLLIN;
+        op = EPOLL_CTL_MOD;
+    } else {
         event = &(_map[fd] = {});
         event->event.data.ptr = event;
         event->event.events = EPOLLIN | EPOLLET;
         op = EPOLL_CTL_ADD;
-    } else {
-        event = &_map[fd];
-        event->event.events |= EPOLLIN;
-        op = EPOLL_CTL_MOD;
     }
     if (event->reader.has_value()) {
         utils::abort("repeatly add reader for fd {}", fd);
@@ -59,15 +59,15 @@ void Epoll::add_reader(int fd, Handle::ID id, EventLoopCallback&& cb) noexcept {
 void Epoll::add_writer(int fd, Handle::ID id, EventLoopCallback&& cb) noexcept {
     Event* event;
     int op;
-    if (_map.find(fd) == _map.end()) {
+    if (_map.contains(fd)) {
+        event = &_map[fd];
+        event->event.events |= EPOLLOUT;
+        op = EPOLL_CTL_MOD;
+    } else {
         event = &(_map[fd] = {});
         event->event.data.ptr = event;
         op = EPOLL_CTL_ADD;
         event->event.events = EPOLLOUT | EPOLLET;
-    } else {
-        event = &_map[fd];
-        event->event.events |= EPOLLOUT;
-        op = EPOLL_CTL_MOD;
     }
     if (event->writer.has_value()) {
         utils::abort("repeatly add writer for fd {}", fd);
@@ -80,7 +80,7 @@ void Epoll::add_writer(int fd, Handle::ID id, EventLoopCallback&& cb) noexcept {
 }
 
 void Epoll::remove_reader(int fd) noexcept {
-    if (_map.find(fd) == _map.end()) {
+    if (!_map.contains(fd)) {
         utils::abort("fd {} not register yet", fd);
     }
     if (!_map[fd].reader) {
@@ -102,7 +102,7 @@ void Epoll::remove_reader(int fd) noexcept {
 }
 
 void Epoll::remove_writer(int fd) noexcept {
-    if (_map.find(fd) == _map.end()) {
+    if (!_map.contains(fd)) {
         utils::abort("fd {} not register yet", fd);
     }
     if (!_map[fd].writer) {
@@ -124,7 +124,7 @@ void Epoll::remove_writer(int fd) noexcept {
 }
 
 void Epoll::clear_fd(int fd) noexcept {
-    if (_map.find(fd) != _map.end()) {
+    if (_map.contains(fd)) {
         _map.erase(fd);
         if (epoll_ctl(this->fd(), EPOLL_CTL_DEL, fd, nullptr) == -1) {
             utils::abort("failed to clear fd {}", fd);
