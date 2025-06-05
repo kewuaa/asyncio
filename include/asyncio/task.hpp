@@ -188,6 +188,7 @@ struct Task<R, E>::Promise final: public PromiseResult<R, E>, public CoroHandle 
     bool suspend_at_final { true };
     std::vector<Callback> done_callbacks {};
     std::source_location loc {};
+    bool has_unhandled_exception { false };
 
     Promise(std::source_location loc = std::source_location::current()): loc(loc) {}
 
@@ -258,6 +259,11 @@ struct Task<R, E>::Promise final: public PromiseResult<R, E>, public CoroHandle 
         constexpr void await_resume() noexcept {}
     };
     FinalAwaiter final_suspend() noexcept {
+        if (has_unhandled_exception) {
+            traceback(0);
+            EventLoop::get().stop();
+            return { suspend_at_final };
+        }
         if (canceled()) {
             return { suspend_at_final };
         }
@@ -271,7 +277,12 @@ struct Task<R, E>::Promise final: public PromiseResult<R, E>, public CoroHandle 
     }
 
     constexpr void unhandled_exception() noexcept {
-        return;
+        has_unhandled_exception = true;
+        try {
+            std::rethrow_exception(std::current_exception());
+        } catch (const std::exception& e) {
+            fmt::println("unhandled exception: {}", e.what());
+        }
     }
 };
 
