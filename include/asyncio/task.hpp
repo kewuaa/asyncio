@@ -158,11 +158,11 @@ public:
 
     template<typename T>
     void return_value(T&& res) noexcept {
-        if constexpr (std::is_same_v<std::decay_t<T>, decltype(result)> || std::is_same_v<std::decay_t<T>, R>) {
+        if constexpr (std::is_convertible_v<decltype(res), TaskResult<R, E>>) {
             result = std::forward<T>(res);
-        } else if constexpr (std::is_same_v<std::decay_t<T>, E>) {
+        } else if constexpr (std::is_convertible_v<decltype(res), E>) {
             result = std::unexpected<E>(std::forward<T>(res));
-        } else if constexpr (std::is_same_v<std::decay_t<T>, std::nullptr_t>) {
+        } else if constexpr (std::is_null_pointer_v<std::decay_t<T>>) {
             static_assert(std::is_void_v<R>, "only nullptr counld be return with [R = void]");
         } else {
             static_assert(false, "unexpected type");
@@ -259,19 +259,17 @@ struct Task<R, E>::Promise final: public PromiseResult<R, E>, public CoroHandle 
         constexpr void await_resume() noexcept {}
     };
     FinalAwaiter final_suspend() noexcept {
+        auto& loop = EventLoop::get();
         if (has_unhandled_exception) {
             traceback(0);
-            EventLoop::get().stop();
-            return { suspend_at_final };
-        }
-        if (canceled()) {
-            return { suspend_at_final };
-        }
-        schedule_callback();
-        if (EventLoop::get().is_root(id())) {
-            EventLoop::get().stop();
-        } else {
-            try_resume_parent();
+            loop.stop();
+        } else if (!canceled()) {
+            schedule_callback();
+            if (loop.is_root(id())) {
+                loop.stop();
+            } else {
+                try_resume_parent();
+            }
         }
         return { suspend_at_final };
     }
