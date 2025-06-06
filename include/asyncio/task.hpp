@@ -279,7 +279,7 @@ struct Task<R, E>::Promise final: public PromiseResult<R, E>, public CoroHandle 
         try {
             std::rethrow_exception(std::current_exception());
         } catch (const std::exception& e) {
-            fmt::println("unhandled exception: {}", e.what());
+            SPDLOG_ERROR("unhandled exception: {}", e.what());
         }
     }
 };
