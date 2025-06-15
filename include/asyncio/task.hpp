@@ -158,12 +158,12 @@ public:
 
     template<typename T>
     void return_value(T&& res) noexcept {
-        if constexpr (std::is_convertible_v<decltype(res), TaskResult<R, E>>) {
+        if constexpr (std::is_void_v<R> && std::is_null_pointer_v<std::decay_t<T>>) {
+            // nothing to do
+        } else if constexpr (std::is_convertible_v<decltype(res), TaskResult<R, E>>) {
             result = std::forward<T>(res);
         } else if constexpr (std::is_convertible_v<decltype(res), E>) {
             result = std::unexpected<E>(std::forward<T>(res));
-        } else if constexpr (std::is_null_pointer_v<std::decay_t<T>>) {
-            static_assert(std::is_void_v<R>, "only nullptr counld be return with [R = void]");
         } else {
             static_assert(false, "unexpected type");
         }
