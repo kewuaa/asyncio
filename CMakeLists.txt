@@ -34,7 +34,7 @@ find_package(spdlog REQUIRED)
 add_library(${PROJECT_NAME} SHARED)
 
 if (CMAKE_BUILD_TYPE STREQUAL Debug)
-    target_compile_options(${PROJECT_NAME} PUBLIC "-D_DEBUG")
+    target_compile_definitions(${PROJECT_NAME} PRIVATE _DEBUG)
 endif()
 
 configure_file(
