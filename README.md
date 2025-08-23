@@ -2,6 +2,15 @@
 
 Drawing on the c++ asynchronous framework implemented by python asyncio library
 
++ based on c++20 coroutine
++ schedule coroutine by eventloop and epoll
++ implement delay schedule by timer
++ async write and read from socket based on nonblock socket
++ sync coroutine by Event, Lock and Condition
++ async waiting for thread result, based on thread pool and pipe
++ be able to print traceback
++ use std::expected to store custom exception
+
 # usage
 
 simple example:
