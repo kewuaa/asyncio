@@ -28,8 +28,8 @@ include(cmake/CPM.cmake)
 include(GenerateExportHeader)
 
 CPMAddPackage(
-        URI "gh:gabime/spdlog@1.16.0"
-        OPTIONS "SPDLOG_USE_STD_FORMAT TRUE"
+    URI "gh:gabime/spdlog@1.16.0"
+    OPTIONS "SPDLOG_USE_STD_FORMAT TRUE"
 )
 
 add_library(${PROJECT_NAME} SHARED)
