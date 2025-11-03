@@ -1,9 +1,6 @@
 cmake_minimum_required(VERSION 3.15)
 
-project(
-    asyncio
-    LANGUAGES CXX
-)
+project(asyncio LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_FLAGS_DEBUG "-Wall -g -ggdb -O0")
