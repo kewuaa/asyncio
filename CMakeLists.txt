@@ -7,6 +7,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "-Wall -g -ggdb -O0")
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_VISIBILITY_INLINES_HIDDEN 1)
 set(CMAKE_EXPORT_COMPILE_COMMANDS on)
+set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 
 set(BUILD_ECHO TRUE CACHE BOOL "if to build echo server")
 set(BUILD_TESTS TRUE CACHE BOOL "if to build test")
@@ -26,7 +27,10 @@ endif()
 include(cmake/CPM.cmake)
 include(GenerateExportHeader)
 
-find_package(spdlog REQUIRED)
+CPMAddPackage(
+        URI "gh:gabime/spdlog@1.16.0"
+        OPTIONS "SPDLOG_USE_STD_FORMAT TRUE"
+)
 
 add_library(${PROJECT_NAME} SHARED)
 

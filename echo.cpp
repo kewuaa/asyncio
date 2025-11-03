@@ -1,3 +1,5 @@
+#include <cstring>
+
 #include "asyncio.hpp"
 using namespace kwa;
 

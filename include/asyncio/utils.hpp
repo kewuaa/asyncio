@@ -1,4 +1,5 @@
 #pragma once
+#include <print>
 #include <source_location>
 
 #include <spdlog/spdlog.h>
@@ -23,9 +24,9 @@ inline void abort(
 
 inline void print_location(const std::source_location& loc, int depth) noexcept {
     if (depth == 0) {
-        fmt::println("traceback below:");
+        std::println("traceback below:");
     }
-    fmt::println(
+    std::println(
         "[{}] {} at {}:{}",
         depth,
         loc.function_name(),
